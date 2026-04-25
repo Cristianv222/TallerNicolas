@@ -2230,6 +2230,12 @@
     function processSale() {
         console.log('🚀 Iniciando procesamiento de venta...');
 
+        // ✅ DEFINICIÓN DE ELEMENTOS FALTANTES
+        const selectedCustomerIdElement = document.getElementById('selectedCustomerId');
+        const selectedOrderIdElement = document.getElementById('selectedOrderId');
+        const printerSelect = document.getElementById('pos-printer-select');
+        const openDrawerCheck = document.getElementById('openDrawerCheck');
+
         let subtotalTotal = 0;
         let subtotalProductos = 0;
         let subtotalServicios = 0;
@@ -2270,6 +2276,17 @@
 
         const electronicInvoicingToggle = document.getElementById('electronicInvoicingToggle');
         const facturarElectronica = electronicInvoicingToggle ? electronicInvoicingToggle.checked : false;
+
+        // ✅ OBTENER DATOS DE IMPRESIÓN
+        let printerData = null;
+        if (selectedPrintType !== 'none' && printerSelect && printerSelect.value) {
+            const printerName = printerSelect.value;
+            const printerObj = availablePrinters.find(p => p.nombre === printerName || p.name === printerName);
+            printerData = {
+                name: printerName,
+                type: printerObj ? (printerObj.type || printerObj.tipo || 'GENERIC_80MM') : 'GENERIC_80MM'
+            };
+        }
 
         const saleData = {
             customer_id: selectedCustomerIdElement ? selectedCustomerIdElement.value || null : null,
@@ -2319,12 +2336,19 @@
             order_id: selectedOrderIdElement ? selectedOrderIdElement.value || null : null,
             imprimir: selectedPrintType !== 'none',
             tipo_impresion: selectedPrintType === 'ticket' ? 'ticket' : 'factura',
-            observaciones: ''
+            observaciones: '',
+            // ✅ NUEVO: OPCIONES DE IMPRESIÓN PARA EL BACKEND MEJORADO
+            print_options: {
+                printOption: selectedPrintType,
+                printer: printerData,
+                openDrawer: openDrawerCheck ? openDrawerCheck.checked : false
+            }
         };
 
         showLoading('Procesando venta...');
 
-        fetch('/ventas/pos/', {
+        // ✅ URL CORREGIDA: /ventas/pos/procesar/
+        fetch('/ventas/pos/procesar/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
