@@ -2455,6 +2455,7 @@
             <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
                 <div style="flex: 1;">
                     <div class="fw-bold text-dark">${escapeHtml(item.name)}</div>
+                    ${item.technician_name ? `<div class="small text-success fw-bold"><i class="bi bi-person-badge me-1"></i>Técnico: ${escapeHtml(item.technician_name)}</div>` : ''}
                     <div class="small text-muted">${escapeHtml(item.code)} | S/ ${item.price.toFixed(2)} c/u</div>
                     <div class="d-flex align-items-center gap-2 mt-1">
                         <div class="input-group input-group-sm" style="max-width: 90px;">
@@ -2502,9 +2503,24 @@
     }
 
     function removeFromCart(index) {
+        const item = cart[index];
         cart.splice(index, 1);
+        
+        // Si eliminamos una orden de trabajo, limpiamos el cliente también
+        if (item && item.type === 'orden_trabajo') {
+            const selectedOrderIdElement = document.getElementById('selectedOrderId');
+            if (selectedOrderIdElement) selectedOrderIdElement.value = '';
+            
+            // Resetear cliente a Consumidor Final
+            selectCustomer('', 'Consumidor Final', '9999999999');
+            showToast('Orden y cliente removidos', 'info');
+        } else {
+            showToast('Item eliminado', 'info');
+        }
+        
         updateCartDisplay();
-        showToast('Producto eliminado', 'info');
+        updateCartCount();
+        updateTotals();
     }
 
     function updateCartCount() {
@@ -2827,6 +2843,11 @@
                 let itemIva = 0;
                 let itemDiscount = 0;
 
+                // ✅ IMPORTANTE: Las órdenes de trabajo se manejan por order_id, no como items individuales
+                if (item.type === 'orden_trabajo') {
+                    return null;
+                }
+
                 if (item.type === 'product') {
                     itemSubtotalGross = itemTotalPrice / (1 + IVA_RATE);
                     itemDiscount = itemSubtotalGross * (itemDescPct / 100);
@@ -2986,17 +3007,26 @@
         lastSaleData = null;
         currentPaymentMethod = null;
 
+        // Reset IDs
         const selectedCustomerIdElement = document.getElementById('selectedCustomerId');
         const selectedOrderIdElement = document.getElementById('selectedOrderId');
-
         if (selectedCustomerIdElement) selectedCustomerIdElement.value = '';
         if (selectedOrderIdElement) selectedOrderIdElement.value = '';
 
-        const customerNameElement = document.getElementById('customerName');
-        const customerIDElement = document.getElementById('customerID');
+        // Reset Customer display (Desktop & Mobile)
+        const elementsToReset = [
+            'customerName', 'customerID', 
+            'customerNameDesktop', 'customerIDDesktop',
+            'customerNameMobile', 'customerIDMobile'
+        ];
 
-        if (customerNameElement) customerNameElement.textContent = 'Consumidor Final';
-        if (customerIDElement) customerIDElement.textContent = '9999999999';
+        elementsToReset.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (id.includes('Name')) el.textContent = 'Consumidor Final';
+                else if (id.includes('ID')) el.textContent = '9999999999';
+            }
+        });
 
         document.querySelectorAll('.payment-option').forEach(btn => {
             btn.classList.remove('active');
@@ -3378,6 +3408,15 @@
         if (existeOrden) {
             showToast('Esta orden ya ha sido añadida al carrito', 'warning');
             return;
+        }
+
+        // Cargar automáticamente el cliente de la orden
+        if (orderData.cliente) {
+            selectCustomer(
+                orderData.cliente.id,
+                orderData.cliente.nombre_completo,
+                orderData.cliente.identificacion
+            );
         }
 
         const ordenItem = {

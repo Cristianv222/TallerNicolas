@@ -469,7 +469,10 @@ def punto_venta(request):
             data = json.loads(request.body)
             logger.info(f"Datos recibidos en POS: {data}")
             
-            if not data.get('items') and not data.get('orden_trabajo_id'):
+            # Obtener el ID de la orden (puede venir como 'order_id' o 'orden_trabajo_id')
+            order_id = data.get('order_id') or data.get('orden_trabajo_id')
+            
+            if not data.get('items') and not order_id:
                 return JsonResponse({'success': False, 'mensaje': 'No hay productos en la venta ni orden de trabajo'})
             
             # ========== OBTENER O CREAR CLIENTE ==========
@@ -495,7 +498,7 @@ def punto_venta(request):
                 total=Decimal(str(data.get('total', '0.00'))),
                 tipo_pago=data.get('tipo_pago', 'EFECTIVO'),
                 observaciones=data.get('observaciones', ''),
-                orden_trabajo_id=data.get('orden_trabajo_id')
+                orden_trabajo_id=order_id
             )
             logger.info(f"Venta creada con ID: {venta.id}, Número: {venta.numero_factura}")
             
@@ -610,30 +613,50 @@ def punto_venta(request):
             logger.info(f"Detalles creados: {detalles_creados} de {len(data.get('items', []))} items")
             
             # ========== MANEJAR ORDEN DE TRABAJO ==========
-            if data.get('orden_trabajo_id'):
+            if order_id:
                 try:
-                    orden = OrdenTrabajo.objects.get(id=data['orden_trabajo_id'])
+                    orden = OrdenTrabajo.objects.get(id=order_id)
                     
-                    # ✅ MARCAR COMO COMPLETADA Y FACTURADA AL MISMO TIEMPO
-                    orden.estado = 'COMPLETADO'
-                    orden.fecha_completado = timezone.now()
-                    orden.facturado = True
-                    orden.venta = venta
-                    orden.save()
-                    
-                    logger.info(f"Orden de trabajo {orden.numero_orden} marcada como COMPLETADA y facturada")
+                    # ✅ ACTUALIZAR STOCK DE REPUESTOS DE LA ORDEN - CRÍTICO
+                    if not orden.facturado:
+                        for repuesto in orden.repuestos_utilizados.all():
+                            if repuesto.producto:
+                                producto_repuesto = repuesto.producto
+                                cantidad_repuesto = repuesto.cantidad
+                                
+                                # Descontar del inventario
+                                stock_antes = producto_repuesto.stock_actual
+                                producto_repuesto.stock_actual -= cantidad_repuesto
+                                producto_repuesto.save()
+                                
+                                logger.info(f"STOCK ACTUALIZADO (ORDEN): {producto_repuesto.nombre} | {stock_antes} -> {producto_repuesto.stock_actual} (Orden {orden.numero_orden})")
+
+                        # ✅ MARCAR COMO COMPLETADA Y FACTURADA AL MISMO TIEMPO
+                        orden.estado = 'COMPLETADO'
+                        orden.fecha_completado = timezone.now()
+                        orden.facturado = True
+                        orden.venta = venta
+                        orden.save()
+                        
+                        logger.info(f"Orden de trabajo {orden.numero_orden} marcada como COMPLETADA y facturada")
+                    else:
+                        logger.warning(f"La orden {orden.numero_orden} ya estaba facturada, no se descuenta stock nuevamente")
                         
                 except OrdenTrabajo.DoesNotExist:
-                    logger.warning(f"Orden de trabajo ID {data['orden_trabajo_id']} no encontrada")
+                    logger.warning(f"Orden de trabajo ID {order_id} no encontrada")
             
             # ========== VERIFICAR DETALLES CREADOS (solo si hay items) ==========
             if data.get('items'):
                 detalles_en_bd = DetalleVenta.objects.filter(venta=venta).count()
                 logger.info(f"Detalles en BD después de crear venta: {detalles_en_bd}")
                 
-                if detalles_en_bd == 0:
-                    logger.error("No se crearon detalles de venta")
+                # Solo fallar si NO hay detalles Y TAMPOCO hay una orden de trabajo
+                if detalles_en_bd == 0 and not order_id:
+                    logger.error("No se crearon detalles de venta y no hay orden de trabajo")
                     return JsonResponse({'success': False, 'mensaje': 'Error: No se pudieron crear los detalles de la venta'})
+            elif not order_id:
+                # Si no hay items y tampoco hay orden, entonces sí es un error
+                return JsonResponse({'success': False, 'mensaje': 'Error: La venta no tiene productos ni orden de trabajo'})
             
             # ========== MANEJO DE IMPRESIÓN ==========
             if data.get('imprimir'):
@@ -1313,14 +1336,19 @@ def api_procesar_venta_pos_mejorado(request):
     try:
         data = json.loads(request.body)
         
-        if not data.get('items'):
-            return JsonResponse({'success': False, 'message': 'No hay productos en la venta'})
+        # Permitir venta si hay items O si hay una orden de trabajo
+        order_id = data.get('order_id')
+        items_recibidos = data.get('items', [])
         
-        # Obtener cliente
+        if not items_recibidos and not order_id:
+            return JsonResponse({'success': False, 'message': 'No hay productos en la venta ni orden de trabajo'})
+        
+        # Obtener cliente (soporte para 'customer_id' o 'cliente_id')
+        cliente_id = data.get('customer_id') or data.get('cliente_id')
         cliente = None
-        if data.get('customer_id'):
+        if cliente_id:
             try:
-                cliente = Cliente.objects.get(id=data['customer_id'])
+                cliente = Cliente.objects.get(id=cliente_id)
             except Cliente.DoesNotExist:
                 return JsonResponse({'success': False, 'message': 'Cliente no encontrado'})
         else:
@@ -1335,11 +1363,12 @@ def api_procesar_venta_pos_mejorado(request):
             descuento=Decimal(str(data.get('discount_amount', '0.00'))),
             total=Decimal(str(data.get('total_amount', '0.00'))),
             tipo_pago=data.get('payment_method', 'EFECTIVO'),
-            observaciones=data.get('observaciones', '')
+            observaciones=data.get('observaciones', ''),
+            orden_trabajo_id=order_id
         )
         
         # Procesar items de la venta
-        for item in data['items']:
+        for item in items_recibidos:
             if item['type'] == 'product':
                 try:
                     producto = Producto.objects.get(id=item['id'])
@@ -1349,22 +1378,19 @@ def api_procesar_venta_pos_mejorado(request):
                         raise Exception(f'Stock insuficiente para {producto.nombre}. Disponible: {producto.stock_actual}')
                     
                     subtotal_item = Decimal(str(item['subtotal']))
-                    iva_item = subtotal_item * Decimal('0.15')
-                    total_item = subtotal_item + iva_item
-                    
-                    nombre_item = item.get('name', producto.nombre)
-                    nombre_personalizado = item.get('name') if producto.es_editable else None
+                    iva_item = Decimal(str(item.get('iva', '0.00'))) # Usar el IVA enviado por el POS
+                    total_item = Decimal(str(item['total']))
                     
                     DetalleVenta.objects.create(
                         venta=venta,
                         producto=producto,
-                        nombre_personalizado=nombre_personalizado,
+                        nombre_personalizado=item.get('name') if producto.es_editable else None,
                         cantidad=cantidad,
                         precio_unitario=Decimal(str(item['unit_price'])),
                         subtotal=subtotal_item,
                         iva_porcentaje=Decimal('15.00'),
                         iva=iva_item,
-                        descuento=Decimal('0.00'),
+                        descuento=Decimal(str(item.get('discount', '0.00'))),
                         total=total_item
                     )
                     
@@ -1383,8 +1409,9 @@ def api_procesar_venta_pos_mejorado(request):
                         tecnico = Tecnico.objects.get(id=item['technician_id'])
                     
                     subtotal_item = Decimal(str(item['subtotal']))
-                    iva_item = subtotal_item * Decimal('0.15')
-                    total_item = subtotal_item + iva_item
+                    # ✅ CORRECCIÓN: Los servicios NO llevan IVA
+                    iva_item = Decimal('0.00')
+                    total_item = subtotal_item - Decimal(str(item.get('discount', '0.00')))
                     
                     DetalleVenta.objects.create(
                         venta=venta,
@@ -1394,9 +1421,9 @@ def api_procesar_venta_pos_mejorado(request):
                         cantidad=Decimal(str(item['quantity'])),
                         precio_unitario=Decimal(str(item['unit_price'])),
                         subtotal=subtotal_item,
-                        iva_porcentaje=Decimal('15.00'),
+                        iva_porcentaje=Decimal('0.00'),
                         iva=iva_item,
-                        descuento=Decimal('0.00'),
+                        descuento=Decimal(str(item.get('discount', '0.00'))),
                         total=total_item,
                         es_servicio=True
                     )
@@ -1407,8 +1434,8 @@ def api_procesar_venta_pos_mejorado(request):
             elif item['type'] == 'manual':
                 # Item personalizado/genérico sin catálogo
                 subtotal_item = Decimal(str(item['subtotal']))
-                iva_item = subtotal_item * Decimal('0.15')
-                total_item = subtotal_item + iva_item
+                iva_item = Decimal('0.00') # Manuales asumen servicio por defecto
+                total_item = subtotal_item
                 
                 DetalleVenta.objects.create(
                     venta=venta,
@@ -1416,7 +1443,7 @@ def api_procesar_venta_pos_mejorado(request):
                     cantidad=Decimal(str(item['quantity'])),
                     precio_unitario=Decimal(str(item['unit_price'])),
                     subtotal=subtotal_item,
-                    iva_porcentaje=Decimal('15.00'),
+                    iva_porcentaje=Decimal('0.00'),
                     iva=iva_item,
                     descuento=Decimal('0.00'),
                     total=total_item,
@@ -1424,9 +1451,20 @@ def api_procesar_venta_pos_mejorado(request):
                 )
         
         # Manejar orden de trabajo si existe
-        if data.get('order_id'):
+        if order_id:
             try:
-                orden = OrdenTrabajo.objects.get(id=data['order_id'])
+                orden = OrdenTrabajo.objects.get(id=order_id)
+                
+                # ✅ ACTUALIZAR STOCK DE REPUESTOS DE LA ORDEN - CRÍTICO
+                if not orden.facturado:
+                    for repuesto in orden.repuestos_utilizados.all():
+                        if repuesto.producto:
+                            prod_rep = repuesto.producto
+                            cant_rep = repuesto.cantidad
+                            prod_rep.stock_actual -= cant_rep
+                            prod_rep.save()
+                            logger.info(f"STOCK ACTUALIZADO (ORDEN): {prod_rep.nombre} -{cant_rep}")
+
                 orden.facturado = True
                 orden.venta = venta
                 if orden.estado != 'COMPLETADO':
@@ -1434,7 +1472,7 @@ def api_procesar_venta_pos_mejorado(request):
                     orden.fecha_completado = timezone.now()
                 orden.save()
             except OrdenTrabajo.DoesNotExist:
-                pass
+                logger.warning(f"Orden de trabajo ID {order_id} no encontrada")
         
         # ⭐ INTEGRACIÓN: Facturación Electrónica SRI (Selective)
         if data.get('facturar_electronica', False):
