@@ -934,317 +934,587 @@
         }
         .spin { animation: spin 1s linear infinite; }
 
-        /* ========== RESPONSIVE POS ========== */
+        /* ========== RESPONSIVE POS (TABBED UI) ========== */
         @media (max-width: 991.98px) {
             .pos-container {
-                padding: 0;
-                margin-bottom: 85px;
+                padding: 0 !important;
+                margin-top: 0 !important;
+                margin-bottom: 85px !important;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                background: #f4f6f9;
             }
 
             .pos-main {
-                grid-template-columns: 1fr;
-                gap: 0;
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Permitir el menú global original como pidió el usuario */
+            .navbar-menu-horizontal, .navbar-user-details {
+                display: none !important;
             }
 
             .card {
-                border-radius: 0;
-                margin-bottom: 0.5rem;
-                box-shadow: none;
+                border-radius: 12px;
+                margin: 0.5rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                border: 1px solid #edf2f7;
             }
 
-            .card-header {
-                padding: 0.75rem 1rem;
-                border-radius: 0 !important;
+            /* Header Móvil POS (Oculto ahora que regresamos al global) */
+            .pos-mobile-header {
+                display: none !important;
             }
 
-            /* Panel de Carrito en Móvil (Se convierte en un panel desplegable o se queda abajo) */
-            /* Por ahora lo dejamos apilado pero con una barra de acceso rápido abajo */
-            .cart-panel {
-                margin-bottom: 100px; /* Espacio para no quedar tapado por la barra */
-            }
-
-            /* Items del carrito más compactos */
-            .cart-item {
-                grid-template-columns: 1fr auto;
-                grid-template-rows: auto auto;
-                gap: 0.5rem;
-                padding: 0.75rem 1rem;
-            }
-
-            .item-info {
-                grid-column: 1;
-                grid-row: 1;
-            }
-
-            .remove-btn {
-                grid-column: 2;
-                grid-row: 1;
-                align-self: flex-start;
-            }
-
-            .quantity-controls {
-                grid-column: 1;
-                grid-row: 2;
-                width: fit-content;
-                padding: 0.15rem;
-            }
-
-            .item-total {
-                grid-column: 2;
-                grid-row: 2;
-                text-align: right;
-                font-size: 1rem;
-            }
-
-            /* Acciones rápidas */
-            .actions-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.4rem;
-                padding: 0.75rem;
-            }
-
-            .action-btn {
-                padding: 0.5rem;
-                font-size: 0.7rem;
-            }
-
-            .action-btn i {
-                font-size: 1rem;
-            }
-
-            /* Totales y Checkout */
-            .totals-section {
-                padding: 1rem;
-            }
-
-            .checkout-section {
-                padding: 1rem;
-            }
-
-            /* Barra fija inferior para móvil */
-            .mobile-checkout-footer {
+            /* Bottom Tab Nav */
+            .pos-mobile-tabs {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
                 background: white;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
                 display: flex !important;
-                padding: 0.75rem 1rem;
-                z-index: 2000;
-                justify-content: space-between;
-                align-items: center;
-                border-top: 3px solid #28a745;
-                animation: slideUp 0.4s ease-out;
+                height: 75px;
+                box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+                z-index: 1030;
+                border-top: 1px solid #f1f5f9;
+                padding-bottom: env(safe-area-inset-bottom);
             }
 
-            @keyframes slideUp {
-                from { transform: translateY(100%); }
-                to { transform: translateY(0); }
+            /* Spotlight Tutorial Fix */
+            .tutorial-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: transparent;
+                z-index: 9000;
+                display: none;
+                pointer-events: auto;
             }
 
-            .mobile-total-info {
+            .tutorial-spotlight {
+                position: fixed;
+                z-index: 9001;
+                border-radius: 15px;
+                /* El box-shadow gigante hace el efecto de oscurecer el resto */
+                box-shadow: 0 0 0 9999px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.4);
+                display: none;
+                pointer-events: none;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 2px solid #fff;
+            }
+
+            .tutorial-tooltip {
+                position: fixed;
+                z-index: 9002;
+                background: white;
+                padding: 1.25rem;
+                border-radius: 12px;
+                width: 280px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                display: none;
+                animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+
+            @keyframes popIn {
+                from { opacity: 0; transform: scale(0.8) translateY(20px); }
+                to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+
+            .pos-tab-item {
+                flex: 1;
                 display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: #6c757d;
+                text-decoration: none;
+                font-size: 0.7rem;
+                gap: 4px;
+                border: none;
+                background: none;
+                transition: all 0.2s;
+                position: relative;
+                padding: 10px 0;
+            }
+
+            .pos-tab-item.active {
+                color: #3f51b5;
+                font-weight: 700;
+            }
+
+            .pos-tab-item i {
+                font-size: 1.4rem;
+            }
+
+            .pos-tab-item .badge {
+                position: absolute;
+                top: 5px;
+                right: 20%;
+                background: #dc3545;
+                color: white;
+                font-size: 0.65rem;
+            }
+
+            /* Tab Content */
+            .tab-pane-mobile {
+                display: none;
+                flex: 1;
+                width: 100%;
+                animation: fadeInPos 0.3s ease;
+            }
+
+            .tab-pane-mobile.active {
+                display: flex !important;
                 flex-direction: column;
             }
 
-            .mobile-total-label {
-                font-size: 0.7rem;
-                color: #6c757d;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+            @keyframes fadeInPos {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
-            .mobile-total-val {
-                font-size: 1.3rem;
-                font-weight: 800;
-                color: #28a745;
+            /* Ajustes de contenido */
+            .quick-actions {
+                background: white;
+                padding: 1rem;
             }
 
-            .mobile-pay-btn {
-                background: #28a745;
-                color: white;
-                border: none;
-                padding: 0.8rem 1.5rem;
-                border-radius: 50px;
-                font-weight: 700;
-                display: flex;
-                align-items: center;
+            .actions-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.75rem;
+            }
+
+            .action-btn {
+                height: 80px;
+                justify-content: center;
+            }
+
+            .cart-item {
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
                 gap: 0.5rem;
-                box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                padding: 1rem;
+                background: white;
+                border-bottom: 1px solid #eee;
+            }
+            
+            #pane-pagar .card-body {
+                padding: 0.75rem !important;
+            }
+            
+            #pane-pagar .section-card {
+                padding: 0.75rem !important;
+                margin-bottom: 0.75rem !important;
             }
         }
 
-        /* Ocultar la barra móvil en escritorio */
-        @media (min-width: 992px) {
-            .mobile-checkout-footer {
-                display: none !important;
+            .item-info { grid-column: 1; grid-row: 1; }
+            .remove-btn { grid-column: 2; grid-row: 1; }
+            .quantity-controls { grid-column: 1; grid-row: 2; margin-top: 0.5rem; }
+            .item-total { grid-column: 2; grid-row: 2; font-size: 1.1rem; font-weight: 700; }
+
+            .totals-section {
+                background: white;
+                margin-top: 1rem;
+                border-top: 1px solid #eee;
             }
+
+            .quick-access-menu {
+                bottom: 85px !important;
+            }
+
+            @keyframes pulse-tab {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); }
+            }
+            .pulse-animation {
+                animation: pulse-tab 0.4s ease-out;
+            }
+        }
+
+    <style>
+        /* ============================================================
+           1. ESTILOS COMPARTIDOS
+           ============================================================ */
+        :root {
+            --pos-primary: #2563eb;
+            --pos-success: #28a745;
+            --pos-bg: #f8fafc;
+        }
+
+        .pos-container {
+            overflow-x: hidden !important;
+            width: 100%;
+        }
+
+        /* ============================================================
+           2. ESCRITORIO (DISEÑO ESTUDIO - PROTEGIDO)
+           ============================================================ */
+        @media (min-width: 992px) {
+            #mobile-interface { display: none !important; }
+            #desktop-interface { 
+                display: block !important; 
+                height: calc(100vh - 70px); /* Ajuste exacto para evitar scroll general */
+                overflow: hidden;
+            }
+            .desktop-main-grid {
+                display: grid;
+                grid-template-columns: 1fr 400px;
+                gap: 1.5rem;
+                padding: 1.5rem;
+                height: 100%;
+                box-sizing: border-box;
+            }
+            .desktop-col-left {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                overflow: hidden;
+                min-height: 0; /* Importante para flex scroll */
+            }
+            .desktop-col-right {
+                height: 100%;
+                overflow: hidden;
+            }
+            .desktop-col-right .card {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+            .desktop-col-right .card-body {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                overflow: hidden;
+            }
+            .desktop-right-content {
+                flex: 1;
+                overflow: hidden; /* ELIMINADO EL SCROLL INTERNO */
+                padding-bottom: 0.5rem;
+            }
+            .desktop-right-footer {
+                padding-top: 0.5rem;
+                border-top: 1px solid #f1f5f9;
+            }
+            
+            /* Compactar elementos del panel derecho */
+            .payment-option {
+                padding: 0.5rem !important; /* Más pequeño */
+            }
+            .payment-option i {
+                font-size: 1.2rem !important;
+                margin-bottom: 2px !important;
+            }
+            .desktop-right-content .p-3 {
+                padding: 0.75rem !important; /* Reducir padding de cajas */
+            }
+            .desktop-right-content .mb-4 {
+                margin-bottom: 0.75rem !important; /* Menos espacio entre secciones */
+            }
+            .info-venta-header {
+                background: var(--pos-success);
+                color: white;
+                padding: 1rem;
+                border-radius: 10px 10px 0 0;
+            }
+            .desktop-action-btn {
+                background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+                height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                text-decoration: none; color: #1e293b; font-weight: 600;
+                transition: all 0.2s;
+            }
+            .desktop-action-btn:hover { background: #f8fafc; border-color: var(--pos-primary); transform: translateY(-2px); }
+            .desktop-action-btn i { font-size: 1.5rem; margin-bottom: 5px; }
+
+            /* Ajuste de scroll interno para el carrito en PC */
+            .desktop-cart-card {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                min-height: 0;
+            }
+            #cartItemsDesktop {
+                flex: 1;
+                overflow-y: auto;
+                padding: 1rem;
+            }
+        }
+
+        /* ============================================================
+           3. MÓVIL (DISEÑO ULTRA-RÁPIDO "PANTALLA ÚNICA")
+           ============================================================ */
+        @media (max-width: 991px) {
+            #desktop-interface { display: none !important; }
+            #mobile-interface { 
+                display: flex !important; 
+                flex-direction: column; 
+                height: 100vh; 
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: white;
+            }
+
+            .mobile-header {
+                padding: 1rem;
+                border-bottom: 1px solid #f1f5f9;
+                display: flex; justify-content: space-between; align-items: center;
+                background: white; z-index: 100;
+            }
+
+            .mobile-actions-bar {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.4rem;
+                padding: 0.75rem;
+                background: #f8fafc;
+            }
+
+            .m-action-btn {
+                background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+                padding: 0.75rem 0.25rem; display: flex; flex-direction: column; align-items: center;
+                font-size: 0.7rem; font-weight: 700; color: #475569;
+            }
+            .m-action-btn i { font-size: 1.25rem; margin-bottom: 2px; color: var(--pos-primary); }
+
+            .mobile-cart-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 0.5rem;
+            }
+
+            .mobile-footer-total {
+                padding: 1rem;
+                background: white;
+                box-shadow: 0 -10px 25px rgba(0,0,0,0.05);
+                display: flex; justify-content: space-between; align-items: center;
+                border-top: 1px solid #f1f5f9;
+            }
+
+            /* Payment Drawer */
+            .payment-drawer {
+                position: fixed; bottom: -100%; left: 0; right: 0;
+                background: white; z-index: 3000;
+                transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 24px 24px 0 0;
+                box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+                padding: 1.5rem;
+                max-height: 90vh; overflow-y: auto;
+            }
+            .payment-drawer.open { bottom: 0; }
+            
+            /* Asegurar que el modal de confirmación esté por encima del drawer */
+            .modal { z-index: 4000 !important; }
+            .modal-backdrop { z-index: 3999 !important; }
         }
     </style>
 {% endblock %}
 
 {% block content %}
-<div class="pos-container">
-    <!-- Main Content -->
-    <div class="pos-main">
-        <!-- Panel de Productos -->
-        <div class="card">
-            <div class="card-header">
-                <h5>
-                    <i class="bi bi-box"></i>
-                    Productos y Servicios
-                </h5>
-            </div>
-
-            <div class="quick-actions">
-                <div class="actions-grid">
-                    <a href="#" class="action-btn" onclick="showOrdersModal()">
-                        <i class="bi bi-file-text"></i>
-                        <span>Órdenes</span>
-                    </a>
-                    <a href="#" class="action-btn" onclick="showServicesModal()">
-                        <i class="bi bi-tools"></i>
-                        <span>Servicios</span>
-                    </a>
-                    <a href="#" class="action-btn" onclick="showProductsModal()">
-                        <i class="bi bi-box-seam"></i>
-                        <span>Productos</span>
-                    </a>
+<div class="pos-container p-0">
+    <!-- VERSION ESCRITORIO -->
+    <div id="desktop-interface">
+        <div class="desktop-main-grid">
+            <div class="desktop-col-left">
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3"><h6 class="mb-0 fw-bold">Acciones Rápidas</h6></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-3"><a href="#" class="desktop-action-btn" onclick="showOrdersModal()"><i class="bi bi-file-text"></i>Órdenes</a></div>
+                            <div class="col-3"><a href="#" class="desktop-action-btn" onclick="showServicesModal()"><i class="bi bi-tools"></i>Servicios</a></div>
+                            <div class="col-3"><a href="#" class="desktop-action-btn" onclick="showProductsModal()"><i class="bi bi-box-seam"></i>Productos</a></div>
+                            <div class="col-3"><a href="#" class="desktop-action-btn text-primary" onclick="showAllSalesModal()"><i class="bi bi-receipt-cutoff"></i>Ventas</a></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm desktop-cart-card">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">Carrito</h6>
+                        <span class="badge bg-primary rounded-pill" id="desktop-badge-count">0 items</span>
+                    </div>
+                    <div id="cartItemsDesktop"></div>
                 </div>
             </div>
-
-            <div class="card-body p-0">
-                <!-- Productos del carrito en el espacio principal -->
-                <div class="cart-items-display">
-                    <div
-                        style="padding: 1rem 1.5rem; background: #f8f9fa; font-weight: 500; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="bi bi-cart3" style="color: #28a745;"></i>
-                        Productos en el Carrito
-                        <span class="badge bg-primary" id="itemCountBadge">0 items</span>
+            <div class="desktop-col-right">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                    <div class="info-venta-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-receipt fs-4"></i>
+                            <h5 class="mb-0 fw-bold">Información de Venta</h5>
+                        </div>
+                        <span class="badge bg-white text-success px-3 py-2 fw-bold" id="desktop-items-total">0 Items</span>
                     </div>
-                    <div class="cart-items" id="cartItems">
-                        <div class="empty-cart">
-                            <i class="bi bi-cart3"></i>
-                            <h5>Carrito vacío</h5>
-                            <p>Usa los botones de arriba para agregar productos y servicios</p>
-                            <div class="search-tips">
-                                <div class="tip-item">
-                                    <i class="bi bi-file-text"></i>
-                                    <span>Órdenes para facturar</span>
-                                </div>
-                                <div class="tip-item">
-                                    <i class="bi bi-box-seam"></i>
-                                    <span>Explorar productos</span>
+
+                    <div class="card-body">
+                        <div class="desktop-right-content">
+                            <div class="p-3 border rounded-3 bg-light mb-4" onclick="showCustomerModal()" style="cursor: pointer;">
+                                <div class="text-uppercase text-muted fw-bold small mb-1">Cliente</div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="fw-bold fs-5" id="customerNameDesktop">Consumidor Final</div>
+                                    <i class="bi bi-pencil-square text-primary"></i>
                                 </div>
                             </div>
+
+                            <div class="mb-4">
+                                <div class="text-uppercase text-muted fw-bold small mb-2">Método de Pago</div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="payment-option border rounded p-3 text-center" data-method="EFECTIVO" onclick="selectPaymentMethod('EFECTIVO')" style="cursor:pointer">
+                                            <i class="bi bi-cash fs-4 d-block mb-1"></i>
+                                            <span class="small fw-bold">Efectivo</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="payment-option border rounded p-3 text-center" data-method="TARJETA" onclick="selectPaymentMethod('TARJETA')" style="cursor:pointer">
+                                            <i class="bi bi-credit-card fs-4 d-block mb-1"></i>
+                                            <span class="small fw-bold">Tarjeta</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="payment-option border rounded p-3 text-center" data-method="TRANSFERENCIA" onclick="selectPaymentMethod('TRANSFERENCIA')" style="cursor:pointer">
+                                            <i class="bi bi-bank fs-4 d-block mb-1"></i>
+                                            <span class="small fw-bold">Transf.</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="payment-option border rounded p-3 text-center" data-method="CREDITO" onclick="selectPaymentMethod('CREDITO')" style="cursor:pointer">
+                                            <i class="bi bi-clock-history fs-4 d-block mb-1"></i>
+                                            <span class="small fw-bold">Crédito</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-light rounded-3 mb-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal:</span>
+                                    <span class="fw-bold" id="subtotalAmountDesktop">S/ 0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Descuento:</span>
+                                    <span class="fw-bold text-success" id="discountAmountDesktop">S/ 0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">IVA (15%):</span>
+                                    <span class="fw-bold" id="taxAmountDesktop">S/ 0.00</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0 fw-bold">TOTAL:</h4>
+                                    <h4 class="mb-0 fw-bold text-success" id="totalAmountDesktop">S/ 0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="desktop-right-footer">
+                            <div class="form-check form-switch p-3 border rounded-3 mb-4 d-flex justify-content-between align-items-center">
+                                <label class="form-check-label fw-bold" for="electronicInvoicingToggleDesktop">
+                                    <i class="bi bi-file-earmark-check text-primary me-2"></i>Factura Electrónica
+                                </label>
+                                <input class="form-check-input ms-0" type="checkbox" id="electronicInvoicingToggleDesktop">
+                            </div>
+
+                            <button id="checkoutBtnDesktop" class="btn btn-primary w-100 py-3 fw-bold fs-5 shadow-sm" onclick="processCheckout()" disabled>
+                                COMPLETAR VENTA
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Panel del Carrito -->
-        <div class="card cart-panel">
-            <div class="card-header cart-header">
-                <h5>
-                    <i class="bi bi-receipt"></i>
-                    Información de Venta
-                    <span class="cart-count" id="cartCount">0 items</span>
-                </h5>
+    <!-- VERSION MOVIL ULTRA-RÁPIDA -->
+    <div id="mobile-interface">
+        <div class="mobile-header">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-link p-0 text-dark" onclick="toggleSidebar()"><i class="bi bi-list fs-2"></i></button>
+                <h6 class="mb-0 fw-bold">POS Móvil</h6>
             </div>
+            <div class="fw-bold text-primary fs-5" id="mobile-total-header">S/ 0.00</div>
+        </div>
 
-            <!-- Cliente -->
-            <div class="cart-section">
-                <div class="section-title">Cliente</div>
-                <div class="customer-card" onclick="showCustomerModal()">
-                    <div class="customer-name" id="customerName">Consumidor Final</div>
-                    <div class="customer-id" id="customerID">9999999999</div>
-                </div>
+        <div class="mobile-actions-bar">
+            <button class="m-action-btn" onclick="showOrdersModal()"><i class="bi bi-file-earmark-text"></i><span>ÓRDENES</span></button>
+            <button class="m-action-btn" onclick="showServicesModal()"><i class="bi bi-tools"></i><span>SERVICIOS</span></button>
+            <button class="m-action-btn" onclick="showProductsModal()"><i class="bi bi-box-seam"></i><span>PRODUCTOS</span></button>
+            <button class="m-action-btn text-primary" onclick="showAllSalesModal()"><i class="bi bi-receipt-cutoff"></i><span>VENTAS</span></button>
+        </div>
+
+        <div class="mobile-cart-container">
+            <div id="cartItemsMobile">
+                <!-- Items de carrito fluyen aquí -->
             </div>
-
-            <!-- Método de Pago -->
-            <div class="cart-section">
-                <div class="section-title d-flex justify-content-between align-items-center">
-                    Método de Pago
-                    <span id="paymentWarning" class="text-danger small" style="display: none; font-weight: bold;">
-                        <i class="bi bi-exclamation-triangle-fill"></i> ¡Atención: Seleccione un método de pago!
-                    </span>
+            
+            <!-- Desglose de Totales siempre visible al final del scroll -->
+            <div id="mobile-cart-summary" class="p-3 bg-light border-top" style="display: none;">
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Subtotal:</span>
+                    <span id="subtotalAmountMobileMain">S/ 0.00</span>
                 </div>
-                <div class="payment-grid" id="paymentGridContainer">
-                    <div class="payment-option" data-method="EFECTIVO" onclick="selectPaymentMethod('EFECTIVO')">
-                        <i class="bi bi-cash"></i>
-                        <span>Efectivo</span>
-                    </div>
-                    <div class="payment-option" data-method="TARJETA" onclick="selectPaymentMethod('TARJETA')">
-                        <i class="bi bi-credit-card"></i>
-                        <span>Tarjeta</span>
-                    </div>
-                    <div class="payment-option" data-method="TRANSFERENCIA"
-                        onclick="selectPaymentMethod('TRANSFERENCIA')">
-                        <i class="bi bi-bank"></i>
-                        <span>Transfer</span>
-                    </div>
-                    <div class="payment-option" data-method="CREDITO" onclick="selectPaymentMethod('CREDITO')">
-                        <i class="bi bi-credit-card-2-front"></i>
-                        <span>Crédito</span>
-                    </div>
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>IVA (15%):</span>
+                    <span id="taxAmountMobileMain">S/ 0.00</span>
                 </div>
-            </div>
-
-            <!-- Totales -->
-            <div class="totals-section">
-                <div class="section-title">Resumen de Venta</div>
-                <div class="total-row">
-                    <span class="total-label">Subtotal:</span>
-                    <span class="total-value" id="subtotalAmount">S/ 0.00</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">IVA (15%):</span>
-                    <span class="total-value" id="taxAmount">S/ 0.00</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Descuento:</span>
-                    <span class="total-value" id="discountAmount">S/ 0.00</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">TOTAL:</span>
-                    <span class="total-value" id="totalAmount">S/ 0.00</span>
-                </div>
-            </div>
-
-            <!-- Botón de checkout -->
-            <div class="checkout-section">
-                <!-- ⭐ NUEVO: Toggle para Facturación Electrónica Premium -->
-                <div class="sri-toggle-container mb-3 p-3 rounded-3 border bg-light">
-                    <div class="form-check form-switch d-flex justify-content-between align-items-center p-0">
-                        <label class="form-check-label fw-bold d-flex align-items-center gap-2" for="electronicInvoicingToggle">
-                            <i class="bi bi-file-earmark-check fs-5 text-primary"></i> 
-                            <span>Factura Electrónica</span>
-                        </label>
-                        <input class="form-check-input ms-0" type="checkbox" id="electronicInvoicingToggle" style="width: 3em; height: 1.5em; cursor: pointer;">
-                    </div>
-                </div>
-                
-                <button id="checkoutBtn" class="checkout-btn" onclick="processCheckout()" disabled>
-                    <i class="bi bi-credit-card"></i>
-                    <span>Completar Venta</span>
-                </button>
-            </div>
-
-            <!-- Cola de Impresión -->
-            <div class="print-queue-section">
-                <div class="section-title d-flex justify-content-between align-items-center mb-2">
-                    <span><i class="bi bi-printer"></i> Cola de Impresión (Hoy)</span>
-                    <span class="badge bg-light text-dark" id="pendingJobsCount">0</span>
-                </div>
-                <div id="printJobQueue" style="max-height: 150px; overflow-y: auto;">
-                    <p class="text-muted small text-center my-2">No hay trabajos recientes</p>
+                <div class="d-flex justify-content-between fw-bold text-dark fs-5">
+                    <span>TOTAL:</span>
+                    <span id="totalAmountMobileMain">S/ 0.00</span>
                 </div>
             </div>
         </div>
+
+        <div class="mobile-footer-total">
+            <div>
+                <div class="small text-muted">Total a pagar:</div>
+                <div class="fw-bold fs-4 text-dark" id="totalAmountMobileFooter">S/ 0.00</div>
+            </div>
+            <button id="btnOpenDrawer" class="btn btn-success btn-lg px-4 fw-bold shadow" onclick="togglePaymentDrawer(true)">
+                COBRAR <i class="bi bi-chevron-up ms-1"></i>
+            </button>
+        </div>
+
+        <!-- Cajón de Pago -->
+        <div class="drawer-overlay" id="drawerOverlay" onclick="togglePaymentDrawer(false)"></div>
+        <div class="payment-drawer" id="paymentDrawer">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 fw-bold">Finalizar Venta</h5>
+                <button class="btn-close" onclick="togglePaymentDrawer(false)"></button>
+            </div>
+
+            <div class="p-3 border rounded-4 mb-3" onclick="showCustomerModal()" style="background:#f8fafc">
+                <div class="small text-muted fw-bold">CLIENTE</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="fw-bold fs-5" id="customerNameMobile">Consumidor Final</div>
+                    <i class="bi bi-pencil-square text-primary"></i>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4" id="mobile-payment-methods">
+                <div class="col-6"><button class="btn btn-outline-secondary w-100 py-3 m-payment-opt" data-method="EFECTIVO" onclick="selectPaymentMethod('EFECTIVO')"><i class="bi bi-cash me-2"></i>Efectivo</button></div>
+                <div class="col-6"><button class="btn btn-outline-secondary w-100 py-3 m-payment-opt" data-method="TARJETA" onclick="selectPaymentMethod('TARJETA')"><i class="bi bi-credit-card me-2"></i>Tarjeta</button></div>
+                <div class="col-6"><button class="btn btn-outline-secondary w-100 py-3 m-payment-opt" data-method="TRANSFERENCIA" onclick="selectPaymentMethod('TRANSFERENCIA')"><i class="bi bi-bank me-2"></i>Transf.</button></div>
+                <div class="col-6"><button class="btn btn-outline-secondary w-100 py-3 m-payment-opt" data-method="CREDITO" onclick="selectPaymentMethod('CREDITO')"><i class="bi bi-clock me-2"></i>Crédito</button></div>
+            </div>
+
+            <div class="form-check form-switch p-3 border rounded-4 mb-4 d-flex justify-content-between align-items-center">
+                <label class="form-check-label fw-bold" for="electronicInvoicingToggleMobile">Factura Electrónica</label>
+                <input class="form-check-input ms-0" type="checkbox" id="electronicInvoicingToggleMobile">
+            </div>
+
+            <button id="checkoutBtnMobile" class="btn btn-primary w-100 py-3 fw-bold fs-5 shadow rounded-4" onclick="processCheckout()" disabled>
+                CONFIRMAR VENTA
+            </button>
+        </div>
     </div>
 </div>
+
+
 
 <!-- Modal de Confirmación de Venta -->
 <div class="modal fade" id="confirmationModal" tabindex="-1">
@@ -1632,48 +1902,182 @@
 <!-- Menú Flotante de Accesos Rápidos -->
 <div class="quick-access-overlay" id="quickAccessOverlay" onclick="toggleQuickAccess()"></div>
 
-<div class="quick-access-menu">
-    <div class="quick-access-options" id="quickAccessOptions">
-        <a href="#" class="quick-access-btn" onclick="showAllSalesModal(event)">
-            <i class="bi bi-receipt-cutoff"></i>
-            <span>Listar Ventas</span>
-        </a>
-
-        <a href="#" class="quick-access-btn" onclick="showPendingOrdersModal(event)">
-            <i class="bi bi-clock-history"></i>
-            <span>Órdenes Pendientes</span>
-            <span class="badge" id="pendingOrdersBadge">0</span>
-        </a>
-    </div>
-
-    <button class="quick-access-toggle" id="quickAccessToggle" onclick="toggleQuickAccess()">
-        <i class="bi bi-lightning-charge"></i>
-    </button>
-</div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- Barra de Pago Móvil -->
-<div class="mobile-checkout-footer" style="display: none;">
-    <div class="mobile-total-info">
-        <span class="mobile-total-label">Total a Pagar</span>
-        <span class="mobile-total-val" id="mobileTotalAmount">S/ 0.00</span>
-    </div>
-    <button class="mobile-pay-btn" onclick="scrollToCheckout()">
-        <i class="bi bi-cart-check"></i>
-        Pagar Ahora
-    </button>
+<!-- Fin de pos-container -->
 </div>
 
 <script>
-    function scrollToCheckout() {
-        const checkoutSection = document.querySelector('.cart-section');
-        if (checkoutSection) {
-            checkoutSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    function togglePaymentDrawer(open) {
+        const drawer = document.getElementById('paymentDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        if (open) {
+            drawer.classList.add('open');
+            overlay.classList.add('visible');
+        } else {
+            drawer.classList.remove('open');
+            overlay.classList.remove('visible');
         }
     }
+
+    // Sobreescribir switchPosTab para móvil
+    function switchPosTab(tabName) {
+        if (window.innerWidth < 992) {
+            if (tabName === 'pagar' || tabName === 'cobrar') {
+                togglePaymentDrawer(true);
+            }
+        }
+    }
+
+    function startPosTutorial(event) {
+        if (event) event.preventDefault();
+        
+        // Desactivar tutorial en escritorio
+        if (window.innerWidth >= 992) {
+            showToast('El tutorial solo está disponible en versión móvil', 'info');
+            return;
+        }
+
+        if (typeof toggleQuickAccess === 'function') toggleQuickAccess();
+
+        const steps = [
+            {
+                title: "👋 ¡Bienvenido!",
+                text: "Esta es la nueva interfaz rápida del POS. Vamos a enseñarte cómo cobrar en 3 pasos.",
+                target: ".pos-mobile-header",
+                tab: "catalogos"
+            },
+            {
+                title: "📦 1. Agrega Items",
+                text: "Usa estos botones para buscar y agregar Órdenes, Servicios o Productos al carrito.",
+                target: ".actions-grid",
+                tab: "catalogos"
+            },
+            {
+                title: "🛒 2. Revisa el Carrito",
+                text: "Aquí puedes ver lo seleccionado, cambiar cantidades o aplicar descuentos rápidamente.",
+                target: "#btn-tab-carrito",
+                tab: "carrito"
+            },
+            {
+                title: "💳 3. Finaliza la Venta",
+                text: "Selecciona al cliente, el método de pago y confirma la venta para imprimir el ticket.",
+                target: "#btn-tab-pagar",
+                tab: "pagar"
+            },
+            {
+                title: "🍔 Menú Principal",
+                text: "Si necesitas salir o ir a otra sección, usa el botón de menú que he restaurado aquí arriba.",
+                target: ".bi-list",
+                tab: "catalogos"
+            }
+        ];
+
+        let currentStep = 0;
+
+        // Crear elementos de tutorial si no existen
+        if (!document.getElementById('tutorial-spotlight')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'tutorial-overlay';
+            overlay.className = 'tutorial-overlay';
+            
+            const spotlight = document.createElement('div');
+            spotlight.id = 'tutorial-spotlight';
+            spotlight.className = 'tutorial-spotlight';
+            
+            const tooltip = document.createElement('div');
+            tooltip.id = 'tutorial-tooltip';
+            tooltip.className = 'tutorial-tooltip';
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(spotlight);
+            document.body.appendChild(tooltip);
+        }
+
+        const spotlight = document.getElementById('tutorial-spotlight');
+        const tooltip = document.getElementById('tutorial-tooltip');
+
+        function showStep(index) {
+            const step = steps[index];
+            switchPosTab(step.tab);
+
+            setTimeout(() => {
+                const target = document.querySelector(step.target);
+                if (!target) return;
+
+                const rect = target.getBoundingClientRect();
+                
+                // Asegurar que el overlay bloquee pero permita clics en tooltip
+                document.getElementById('tutorial-overlay').style.display = 'block';
+
+                // Posicionar spotlight
+                spotlight.style.display = 'block';
+                spotlight.style.top = (rect.top - 8) + 'px';
+                spotlight.style.left = (rect.left - 8) + 'px';
+                spotlight.style.width = (rect.width + 16) + 'px';
+                spotlight.style.height = (rect.height + 16) + 'px';
+
+                // Posicionar tooltip
+                tooltip.style.display = 'block';
+                tooltip.innerHTML = `
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-weight: bold;">
+                            ${index + 1}
+                        </div>
+                        <h6 class="fw-bold mb-0 text-dark">${step.title}</h6>
+                    </div>
+                    <p class="text-muted mb-4">${step.text}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">${index + 1} de ${steps.length}</div>
+                        <div class="d-flex gap-2">
+                            ${index > 0 ? `<button class="btn btn-sm btn-outline-secondary px-3" onclick="window._prevStep()">Atrás</button>` : ''}
+                            <button class="btn btn-sm btn-primary px-4 fw-bold" onclick="window._nextStep()">
+                                ${index === steps.length - 1 ? '¡Listo!' : 'Siguiente'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Ajustar posición del tooltip
+                const tooltipRect = tooltip.getBoundingClientRect();
+                let top = rect.bottom + 20;
+                
+                // Si el tooltip se sale por abajo, ponerlo arriba
+                if (top + tooltipRect.height > window.innerHeight - 20) {
+                    top = rect.top - tooltipRect.height - 20;
+                }
+                
+                // Centrar horizontalmente respecto al spotlight
+                let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                left = Math.max(15, Math.min(window.innerWidth - tooltipRect.width - 15, left));
+                
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+            }, 400);
+        }
+
+        window._nextStep = () => {
+            currentStep++;
+            if (currentStep < steps.length) showStep(currentStep);
+            else endTutorial();
+        };
+
+        window._prevStep = () => {
+            currentStep--;
+            showStep(currentStep);
+        };
+
+        function endTutorial() {
+            spotlight.style.display = 'none';
+            tooltip.style.display = 'none';
+            document.getElementById('tutorial-overlay').style.display = 'none';
+        }
+
+        document.getElementById('tutorial-overlay').style.display = 'block';
+        showStep(0);
+    }
 </script>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- ✅ CAMPOS OCULTOS -->
 <input type="hidden" id="selectedCustomerId" value="">
@@ -1845,6 +2249,9 @@
     });
 
     function initializePOS() {
+        // Enforce default customer
+        selectCustomer(null, 'Consumidor Final', '9999999999');
+        
         updateCartDisplay();
         updateCartCount();
         updateTotals();
@@ -2018,35 +2425,10 @@
     }
 
     function updateCartDisplay() {
-        const cartItems = document.getElementById('cartItems');
-        if (!cartItems) return;
-
-        if (cart.length === 0) {
-            cartItems.innerHTML = `
-            <div class="empty-cart">
-                <i class="bi bi-cart3"></i>
-                <h5>Carrito vacío</h5>
-                <p>Usa los botones de arriba para agregar productos y servicios</p>
-                <div class="search-tips">
-                    <div class="tip-item">
-                        <i class="bi bi-file-text"></i>
-                        <span>Órdenes para facturar</span>
-                    </div>
-                    <div class="tip-item">
-                        <i class="bi bi-box-seam"></i>
-                        <span>Explorar productos</span>
-                    </div>
-                </div>
-            </div>
-        `;
-            return;
-        }
-
-        cartItems.innerHTML = cart.map((item, index) => {
+        const html = cart.map((item, index) => {
             const itemTotalPrice = item.price * item.quantity;
             let itemDescPct = item.descuento_porcentaje || 0;
             
-            // Calculate item subtotal for UI display
             let netItemTotal = itemTotalPrice;
             if (item.type === 'product') {
                 let grossSub = itemTotalPrice / (1 + IVA_RATE);
@@ -2059,158 +2441,82 @@
                 netItemTotal = itemTotalPrice - itemDesc;
             }
 
-            if (item.type === 'orden_trabajo') {
-                return `
-                <div class="cart-item" style="border-left: 4px solid #0d6efd;">
-                    <div class="item-info">
-                        <div class="item-name">
-                            <i class="bi bi-file-earmark-text text-primary"></i> ${escapeHtml(item.name)}
-                        </div>
-                        <div class="item-code">
-                            <span class="badge bg-primary">ORDEN DE TRABAJO</span> ${escapeHtml(item.code)}
-                        </div>
-                        ${item.description ? `<div class="item-description" style="font-size: 0.85rem; color: #6c757d; margin-top: 4px;">${escapeHtml(item.description)}</div>` : ''}
-                        <div class="input-group input-group-sm mt-1" style="max-width: 120px;">
-                            <span class="input-group-text">Desc %</span>
-                            <input type="number" class="form-control" value="${itemDescPct}" min="0" max="100" step="1"
-                                   onchange="updateDiscount(${index}, this.value)">
-                        </div>
-                        <div class="item-price" style="margin-top: 8px; font-weight: 600; color: #0d6efd;">
-                            Total: S/ ${netItemTotal.toFixed(2)}
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="quantity-badge" style="background: #0d6efd; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600;">
-                            x1
-                        </div>
-                        <button class="remove-btn" onclick="removeFromCart(${index})" title="Eliminar">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            }
-
-            if (item.type === 'manual' || item.es_personalizable || (item.type === 'product' && item.es_editable)) {
-                const isProduct = item.type === 'product';
-                const color = isProduct ? '#28a745' : '#ffc107';
-                const badgeClass = isProduct ? 'bg-success' : 'bg-warning text-dark';
-                const badgeText = isProduct ? 'PRODUCTO EDITABLE' : (item.type === 'manual' ? 'MANUAL' : 'SERVICIO EDITABLE');
-                
-                return `
-                <div class="cart-item" style="border-left: 4px solid ${color};">
-                    <div class="item-info">
-                        <input type="text" class="form-control form-control-sm mb-1 fw-bold" value="${escapeHtml(item.name)}" 
-                               onchange="updateManualItem(${index}, 'name', this.value)" placeholder="Nombre personalizado"
-                               title="Puede editar el nombre de este item">
-                        <div class="item-code"><span class="badge ${badgeClass}">${badgeText}</span> ${escapeHtml(item.code || '')}</div>
-                        <div class="input-group input-group-sm mt-1" style="max-width: 150px;">
-                            <span class="input-group-text">S/</span>
-                            <input type="number" class="form-control" value="${item.price}" step="0.01"
-                                   onchange="updateManualItem(${index}, 'price', this.value)">
-                        </div>
-                        <div class="input-group input-group-sm mt-1" style="max-width: 120px;">
-                            <span class="input-group-text">Desc %</span>
-                            <input type="number" class="form-control" value="${itemDescPct}" min="0" max="100" step="1"
-                                   onchange="updateDiscount(${index}, this.value)">
-                        </div>
-                    </div>
-                    <div class="quantity-controls">
-                        <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity - 1})">
-                            <i class="bi bi-dash"></i>
-                        </button>
-                        <span class="qty-display">${item.quantity}</span>
-                        <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity + 1})">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                    </div>
-                    <div class="item-total">S/ ${netItemTotal.toFixed(2)}</div>
-                    <button class="remove-btn" onclick="removeFromCart(${index})" title="Eliminar">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-                `;
-            }
-
+            // Unificado para ambos
             return `
-            <div class="cart-item">
-                <div class="item-info">
-                    <div class="item-name">${escapeHtml(item.name)}</div>
-                    <div class="item-code">${escapeHtml(item.code)}</div>
-                    <div class="item-price">S/ ${item.price.toFixed(2)} c/u</div>
-                    ${item.technician_name ? `<div class="item-technician">Técnico: ${escapeHtml(item.technician_name)}</div>` : ''}
-                    <div class="input-group input-group-sm mt-1" style="max-width: 120px;">
-                        <span class="input-group-text">Desc %</span>
-                        <input type="number" class="form-control" value="${itemDescPct}" min="0" max="100" step="1"
-                               onchange="updateDiscount(${index}, this.value)">
+            <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                <div style="flex: 1;">
+                    <div class="fw-bold text-dark">${escapeHtml(item.name)}</div>
+                    <div class="small text-muted">${escapeHtml(item.code)} | S/ ${item.price.toFixed(2)} c/u</div>
+                    <div class="d-flex align-items-center gap-2 mt-1">
+                        <div class="input-group input-group-sm" style="max-width: 90px;">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity(${index}, ${item.quantity - 1})">-</button>
+                            <span class="input-group-text bg-white fw-bold px-2" style="font-size:0.8rem">${item.quantity}</span>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity(${index}, ${item.quantity + 1})">+</button>
+                        </div>
+                        <div class="input-group input-group-sm" style="max-width: 90px;">
+                            <span class="input-group-text p-1 small" style="font-size:0.7rem">%</span>
+                            <input type="number" class="form-control px-1" value="${itemDescPct}" onchange="updateDiscount(${index}, this.value)" style="font-size:0.8rem">
+                        </div>
                     </div>
                 </div>
-                <div class="quantity-controls">
-                    <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity - 1})">
-                        <i class="bi bi-dash"></i>
-                    </button>
-                    <span class="qty-display">${item.quantity}</span>
-                    <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity + 1})">
-                        <i class="bi bi-plus"></i>
+                <div class="text-end">
+                    <div class="fw-bold text-primary">S/ ${netItemTotal.toFixed(2)}</div>
+                    <button class="btn btn-sm text-danger p-0 mt-1" onclick="removeFromCart(${index})" style="font-size:0.75rem">
+                        <i class="bi bi-trash"></i> Eliminar
                     </button>
                 </div>
-                <div class="item-total">S/ ${netItemTotal.toFixed(2)}</div>
-                <button class="remove-btn" onclick="removeFromCart(${index})" title="Eliminar">
-                    <i class="bi bi-x"></i>
-                </button>
             </div>
-        `;
+            `;
         }).join('');
+
+        const cartItemsDesktop = document.getElementById('cartItemsDesktop');
+        const cartItemsMobile = document.getElementById('cartItemsMobile');
+
+        const emptyHtml = '<div class="p-5 text-center text-muted"><i class="bi bi-cart3 fs-1 d-block mb-2"></i><div>Carrito vacío</div></div>';
+
+        if (cartItemsDesktop) cartItemsDesktop.innerHTML = cart.length === 0 ? emptyHtml : html;
+        if (cartItemsMobile) cartItemsMobile.innerHTML = cart.length === 0 ? emptyHtml : html;
+
+        updateCartCount();
+        updateTotals();
     }
 
+    // Ocultar la versión anterior que quedó atrapada
     function updateQuantity(index, newQuantity) {
         const quantity = parseInt(newQuantity);
-
         if (quantity <= 0) {
             removeFromCart(index);
             return;
         }
-
-        const item = cart[index];
-        if (item.type === 'product' && item.stock && quantity > item.stock) {
-            showToast('Stock insuficiente', 'warning');
-            updateCartDisplay();
-            return;
-        }
-
         cart[index].quantity = quantity;
         updateCartDisplay();
-        updateTotals();
     }
 
     function removeFromCart(index) {
         cart.splice(index, 1);
         updateCartDisplay();
-        updateCartCount();
-        updateTotals();
-        enableCheckoutIfReady();
         showToast('Producto eliminado', 'info');
     }
 
     function updateCartCount() {
         const count = cart.reduce((total, item) => total + item.quantity, 0);
 
-        const itemCountBadge = document.getElementById('itemCountBadge');
-        if (itemCountBadge) {
-            itemCountBadge.textContent = `${count} items`;
-        }
+        // Desktop
+        const deskBadge = document.getElementById('desktop-badge-count');
+        const deskItems = document.getElementById('desktop-items-total');
+        if (deskBadge) deskBadge.textContent = `${count} items`;
+        if (deskItems) deskItems.textContent = `${count} Items`;
 
-        const cartCount = document.getElementById('cartCount');
-        if (cartCount) {
-            cartCount.textContent = `${count} items`;
+        // Mobile
+        const mobBadge = document.getElementById('mobile-badge-count');
+        if (mobBadge) {
+            mobBadge.textContent = count;
+            mobBadge.style.display = count > 0 ? 'block' : 'none';
         }
     }
 
     function updateTotals() {
         let subtotalTotal = 0;
-        let subtotalProductos = 0;
-        let subtotalServicios = 0;
-        let subtotalOrdenes = 0;
         let taxTotal = 0;
         let discountTotal = 0;
 
@@ -2227,15 +2533,10 @@
                 itemDiscount = itemSubtotalGross * (itemDescPct / 100);
                 let netSubtotal = itemSubtotalGross - itemDiscount;
                 itemTax = netSubtotal * IVA_RATE;
-                subtotalProductos += itemSubtotalGross;
-            } else if (item.type === 'service') {
+            } else {
                 itemSubtotalGross = itemTotalPrice;
                 itemDiscount = itemSubtotalGross * (itemDescPct / 100);
-                subtotalServicios += itemSubtotalGross;
-            } else if (item.type === 'orden_trabajo') {
-                itemSubtotalGross = itemTotalPrice;
-                itemDiscount = itemSubtotalGross * (itemDescPct / 100);
-                subtotalOrdenes += itemSubtotalGross;
+                // Servicios y otros no graban IVA en este POS según lógica previa
             }
 
             subtotalTotal += itemSubtotalGross;
@@ -2245,18 +2546,58 @@
 
         const total = subtotalTotal + taxTotal - discountTotal;
 
-        const subtotalElement = document.getElementById('subtotalAmount');
-        const taxElement = document.getElementById('taxAmount');
-        const discountElement = document.getElementById('discountAmount');
-        const totalElement = document.getElementById('totalAmount');
+        // Sync Desktop
+        const idsD = {
+            'subtotalAmountDesktop': subtotalTotal,
+            'discountAmountDesktop': discountTotal,
+            'taxAmountDesktop': taxTotal,
+            'totalAmountDesktop': total
+        };
+        for (const [id, val] of Object.entries(idsD)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = `S/ ${val.toFixed(2)}`;
+        }
 
-        if (subtotalElement) subtotalElement.textContent = `S/ ${subtotalTotal.toFixed(2)}`;
-        if (taxElement) taxElement.textContent = `S/ ${taxTotal.toFixed(2)}`;
-        if (discountElement) discountElement.textContent = `S/ ${discountTotal.toFixed(2)}`;
-        if (totalElement) totalElement.textContent = `S/ ${total.toFixed(2)}`;
+        // Sync Mobile
+        const subMobile = document.getElementById('subtotalAmountMobile'); // Si existe
+        const taxMobile = document.getElementById('taxAmountMobile'); // Si existe
+        const totalMobile = document.getElementById('totalAmountMobile'); // Si existe
+        const totalFooter = document.getElementById('totalAmountMobileFooter');
+        const headerTotal = document.getElementById('mobile-total-header');
 
-        const mobileTotalElement = document.getElementById('mobileTotalAmount');
-        if (mobileTotalElement) mobileTotalElement.textContent = `S/ ${total.toFixed(2)}`;
+        if (totalFooter) totalFooter.textContent = `S/ ${total.toFixed(2)}`;
+        if (headerTotal) headerTotal.textContent = `S/ ${total.toFixed(2)}`;
+        
+        const summaryDiv = document.getElementById('mobile-cart-summary');
+        if (summaryDiv) summaryDiv.style.display = cart.length > 0 ? 'block' : 'none';
+
+        const subMMain = document.getElementById('subtotalAmountMobileMain');
+        const taxMMain = document.getElementById('taxAmountMobileMain');
+        const totMMain = document.getElementById('totalAmountMobileMain');
+        if (subMMain) subMMain.textContent = `S/ ${subtotalTotal.toFixed(2)}`;
+        if (taxMMain) taxMMain.textContent = `S/ ${taxTotal.toFixed(2)}`;
+        if (totMMain) totMMain.textContent = `S/ ${total.toFixed(2)}`;
+
+        // Sincronizar el cajón de pago si está abierto
+        const subM = document.getElementById('subtotalAmountMobile');
+        const taxM = document.getElementById('taxAmountMobile');
+        const totM = document.getElementById('totalAmountMobile');
+        if (subM) subM.textContent = `S/ ${subtotalTotal.toFixed(2)}`;
+        if (taxM) taxM.textContent = `S/ ${taxTotal.toFixed(2)}`;
+        if (totM) totM.textContent = `S/ ${total.toFixed(2)}`;
+
+        const btnD = document.getElementById('checkoutBtnDesktop');
+        const btnM = document.getElementById('checkoutBtnMobile');
+        const canCheckout = cart.length > 0 && currentPaymentMethod;
+        
+        if (btnD) {
+            btnD.disabled = !canCheckout;
+            btnD.className = canCheckout ? 'btn btn-primary w-100 py-3 fw-bold shadow-sm' : 'btn btn-secondary w-100 py-3 fw-bold shadow-sm';
+        }
+        if (btnM) {
+            btnM.disabled = !canCheckout;
+            btnM.className = canCheckout ? 'btn btn-primary w-100 py-3 fw-bold shadow rounded-4 mb-3' : 'btn btn-secondary w-100 py-3 fw-bold shadow rounded-4 mb-3';
+        }
     }
 
     function updateDiscount(index, value) {
@@ -2446,7 +2787,8 @@
 
         const total = subtotalTotal + taxTotal - discountTotal;
 
-        const electronicInvoicingToggle = document.getElementById('electronicInvoicingToggle');
+        const isMobile = window.innerWidth < 992;
+        const electronicInvoicingToggle = document.getElementById(isMobile ? 'electronicInvoicingToggleMobile' : 'electronicInvoicingToggleDesktop');
         const facturarElectronica = electronicInvoicingToggle ? electronicInvoicingToggle.checked : false;
 
         // ✅ OBTENER DATOS DE IMPRESIÓN
@@ -2661,28 +3003,24 @@
 
     function selectPaymentMethod(method) {
         currentPaymentMethod = method;
-
-        const warning = document.getElementById('paymentWarning');
-        if (warning) warning.style.display = 'none';
-
-        document.querySelectorAll('.payment-option').forEach(btn => {
-            btn.style.backgroundColor = '';
-            btn.style.borderColor = '';
-            btn.classList.remove('active');
-            btn.style.transform = 'scale(1)';
+        
+        // Reset all buttons (Desktop & Mobile)
+        document.querySelectorAll('.payment-option, .m-payment-opt').forEach(btn => {
+            btn.classList.remove('active', 'btn-primary');
+            if (btn.classList.contains('btn')) btn.classList.add('btn-outline-secondary');
         });
 
-        const selectedBtn = document.querySelector(`[data-method="${method}"]`);
-        if (selectedBtn) {
-            selectedBtn.classList.add('active');
-            selectedBtn.style.transform = 'scale(1.05)';
+        // Highlight selected
+        const selectedBtns = document.querySelectorAll(`[data-method="${method}"]`);
+        selectedBtns.forEach(btn => {
+            btn.classList.add('active');
+            if (btn.classList.contains('btn')) {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-primary');
+            }
+        });
 
-            setTimeout(() => {
-                selectedBtn.style.transform = 'scale(1)';
-            }, 200);
-        }
-
-        console.log('💳 Método de pago seleccionado:', method);
+        updateTotals();
     }
 
     // ========== MODALES - CLIENTES ==========
@@ -2766,21 +3104,27 @@
 
     function selectCustomer(customerId, customerName, customerID) {
         const selectedCustomerIdElement = document.getElementById('selectedCustomerId');
-        const customerNameElement = document.getElementById('customerName');
-        const customerIDElement = document.getElementById('customerID');
+        if (selectedCustomerIdElement) {
+            selectedCustomerIdElement.value = customerId || '';
+        }
 
-        if (selectedCustomerIdElement) selectedCustomerIdElement.value = customerId;
-        if (customerNameElement) customerNameElement.textContent = customerName;
-        if (customerIDElement) customerIDElement.textContent = customerID;
+        // Sync Desktop
+        const nameD = document.getElementById('customerNameDesktop');
+        const idD = document.getElementById('customerIDDesktop');
+        if (nameD) nameD.textContent = customerName;
+        if (idD) idD.textContent = customerID;
+
+        // Sync Mobile
+        const nameM = document.getElementById('customerNameMobile');
+        const idM = document.getElementById('customerIDMobile');
+        if (nameM) nameM.textContent = customerName;
+        if (idM) idM.textContent = customerID;
 
         const customerModal = document.getElementById('customerModal');
         if (customerModal) {
             const modalInstance = bootstrap.Modal.getInstance(customerModal);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
+            if (modalInstance) modalInstance.hide();
         }
-
         showToast('Cliente seleccionado', 'success');
     }
 
@@ -3022,6 +3366,7 @@
     function processOrderData(orderData) {
         cart = [];
 
+        /* COMENTADO POR SOLICITUD DEL USUARIO: SIEMPRE CONSUMIDOR FINAL 
         if (orderData.cliente) {
             selectCustomer(
                 orderData.cliente.id,
@@ -3029,6 +3374,7 @@
                 orderData.cliente.identificacion
             );
         }
+        */
 
         const ordenItem = {
             id: orderData.id,
@@ -3355,7 +3701,6 @@
 
     function showAllSalesModal(event) {
         if (event) event.preventDefault();
-        toggleQuickAccess();
 
         const modal = new bootstrap.Modal(document.getElementById('allSalesModal'));
         modal.show();
@@ -3364,7 +3709,6 @@
 
     function showPendingOrdersModal(event) {
         if (event) event.preventDefault();
-        toggleQuickAccess();
 
         const modal = new bootstrap.Modal(document.getElementById('pendingOrdersListModal'));
         modal.show();
@@ -3522,6 +3866,9 @@
     }
 
     function processCheckout() {
+        if (window.innerWidth < 992) {
+            togglePaymentDrawer(false);
+        }
         if (cart.length === 0) {
             showToast('⚠️ El carrito está vacío', 'warning');
             return false;
@@ -3599,7 +3946,8 @@
         }
 
         const confirmationCustomer = document.getElementById('confirmationCustomer');
-        const customerNameElement = document.getElementById('customerName');
+        const isMobile = window.innerWidth < 992;
+        const customerNameElement = document.getElementById(isMobile ? 'customerNameMobile' : 'customerNameDesktop');
         if (confirmationCustomer && customerNameElement) {
             confirmationCustomer.textContent = customerNameElement.textContent;
         }
@@ -3633,10 +3981,7 @@
     // ========== FUNCIONES AUXILIARES ==========
 
     function enableCheckoutIfReady() {
-        const checkoutBtn = document.getElementById('checkoutBtn');
-        if (checkoutBtn) {
-            checkoutBtn.disabled = cart.length === 0;
-        }
+        updateTotals();
     }
 
     function checkOrderInURL() {

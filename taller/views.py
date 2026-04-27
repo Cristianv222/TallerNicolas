@@ -268,20 +268,8 @@ class TecnicoCreateView(LoginRequiredMixin, CreateView):
             print(f"  {field}: {value}")
         print("=" * 50)
         
-        # También revisar formsets
-        context = self.get_context_data()
-        servicios_formset = context['servicios_formset']
-        repuestos_formset = context['repuestos_formset']
-        
-        if not servicios_formset.is_valid():
-            print("ERRORES EN FORMSET DE SERVICIOS:")
-            print(servicios_formset.errors)
-            print("=" * 50)
-        
-        if not repuestos_formset.is_valid():
-            print("ERRORES EN FORMSET DE REPUESTOS:")
-            print(repuestos_formset.errors)
-            print("=" * 50)
+        # Fin de debug
+
         
         messages.error(
             self.request,
