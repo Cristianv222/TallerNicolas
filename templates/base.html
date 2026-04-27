@@ -26,7 +26,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- PWA -->
+    <!-- PWA / iOS Specific -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff4b2b">
     <meta name="mobile-web-app-capable" content="yes">
@@ -34,6 +34,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Full Motos Nicolas">
     <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}">
+    
+    <!-- Evitar zoom táctil en iOS para sensación nativa -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <style>
         :root {
@@ -68,7 +71,11 @@
             color: var(--dark);
             margin: 0;
             line-height: 1.5;
+            overscroll-behavior-y: none; /* Sensación nativa en iOS (sin rebote elástico) */
+            -webkit-tap-highlight-color: transparent; /* Quita el destello azul en botones */
         }
+
+        /* ========== PWA SPLASH SCREEN ========== */
 
         /* ========== NAVBAR HORIZONTAL ========== */
         .navbar-horizontal {
@@ -606,6 +613,7 @@
 </head>
 
 <body>
+
     <!-- Navbar Horizontal -->
     <nav class="navbar-horizontal">
         <!-- Brand -->
@@ -1021,6 +1029,7 @@
     {% block inventory_js %}{% endblock %}
 
     <script>
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })

@@ -9,8 +9,8 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h1 class="mb-0"><i class="fas fa-boxes text-primary"></i> Inventario de Productos</h1>
-            <div class="d-flex gap-2 flex-wrap">
+            <h1 class="mb-0 fs-3"><i class="fas fa-boxes text-primary"></i> Inventario</h1>
+            <div class="d-none d-md-flex gap-2 flex-wrap">
                 <a href="{% url 'inventario:crear_producto' %}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i> Nuevo Producto
                 </a>
@@ -26,6 +26,20 @@
                 <button type="button" class="btn btn-warning text-white" id="btnImprimirMasivo" data-bs-toggle="tooltip" title="Impresión rápida de etiquetas">
                     <i class="fas fa-print me-1"></i> Etiquetas
                 </button>
+            </div>
+            
+            <!-- Botón desplegable para móviles (acciones principales) -->
+            <div class="dropdown d-md-none">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i> Opciones
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'inventario:transferencias_lista' %}"><i class="fas fa-exchange-alt me-2 text-secondary"></i> Transferencias</a></li>
+                    <li><a class="dropdown-item" href="{% url 'inventario:importar_productos' %}"><i class="fas fa-file-upload me-2 text-success"></i> Importar</a></li>
+                    <li><a class="dropdown-item" href="{% url 'inventario:exportar_productos' %}"><i class="fas fa-file-download me-2 text-info"></i> Exportar</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" id="btnImprimirMasivoMobile"><i class="fas fa-print me-2 text-warning"></i> Etiquetas</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -71,7 +85,7 @@
 </div>
 
 <!-- Estadísticas -->
-<div class="row mb-4">
+<div class="row mb-4 mobile-horizontal-scroll">
     <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
@@ -259,8 +273,9 @@
             <span class="badge bg-primary fs-6">{{ productos.paginator.count }} productos</span>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
+    <div class="card-body p-0 p-md-3">
+        <!-- Vista Desktop: Tabla -->
+        <div class="table-responsive d-none d-md-block">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -390,6 +405,72 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista Móvil: Tarjetas Nativas -->
+        <div class="d-md-none p-3">
+            {% for producto in productos %}
+            <div class="mobile-product-card {% if producto.stock_actual == 0 %}stock-zero{% elif producto.es_stock_bajo %}stock-low{% else %}stock-ok{% endif %}">
+                <div class="mp-header">
+                    <div class="mp-image">
+                        {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+                        {% else %}
+                        <i class="fas fa-box"></i>
+                        {% endif %}
+                    </div>
+                    <div class="mp-info">
+                        <h4 class="mp-title">{{ producto.nombre }}</h4>
+                        <span class="mp-code">{{ producto.codigo_unico }}</span>
+                        <div class="mp-badges">
+                            <span class="mp-badge bg-primary bg-opacity-10 text-primary">{{ producto.categoria.nombre|truncatechars:12 }}</span>
+                            <span class="mp-badge bg-secondary bg-opacity-10 text-secondary">{{ producto.marca.nombre|truncatechars:10 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mp-stats">
+                    <div class="mp-stat">
+                        <span class="mp-stat-label">Precio</span>
+                        <span class="mp-stat-value mp-price">${{ producto.precio_venta|floatformat:2 }}</span>
+                    </div>
+                    <div class="mp-stat mp-stat-right">
+                        <span class="mp-stat-label">Stock</span>
+                        <span class="mp-stat-value {% if producto.stock_actual == 0 %}text-danger{% elif producto.es_stock_bajo %}text-warning{% else %}text-success{% endif %}">
+                            {{ producto.stock_actual }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mp-actions">
+                    <a href="{% url 'inventario:detalle_producto' producto.id %}" class="mp-btn bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'inventario:editar_producto' producto.id %}" class="mp-btn bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'inventario:crear_ajuste' %}?producto_id={{ producto.id }}" class="mp-btn bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-sliders-h"></i>
+                    </a>
+                    <button type="button" class="mp-btn bg-warning bg-opacity-10 text-warning btn-imprimir-etiqueta border-0"
+                            data-producto-id="{{ producto.id }}"
+                            data-producto-nombre="{{ producto.nombre }}">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button type="button" class="mp-btn bg-{% if producto.activo %}danger{% else %}success{% endif %} bg-opacity-10 text-{% if producto.activo %}danger{% else %}success{% endif %} btn-toggle-estado border-0"
+                            data-producto-id="{{ producto.id }}"
+                            data-producto-nombre="{{ producto.nombre }}"
+                            data-estado-actual="{{ producto.activo|yesno:'true,false' }}">
+                        <i class="fas {% if producto.activo %}fa-power-off{% else %}fa-check{% endif %}"></i>
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted opacity-25 mb-3"></i>
+                <h6>No se encontraron productos</h6>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
@@ -832,6 +913,166 @@
         transform: scale(1.1) rotate(90deg);
         box-shadow: 0 10px 20px rgba(0,0,0,0.19);
         color: white;
+    }
+
+    /* Mobile specific adjustments */
+    @media (max-width: 768px) {
+        .mobile-horizontal-scroll {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 10px;
+        }
+        
+        .mobile-horizontal-scroll > div {
+            flex: 0 0 240px;
+            scroll-snap-align: center;
+        }
+
+        .mobile-horizontal-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .mobile-horizontal-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--gray-300);
+            border-radius: 4px;
+        }
+    }
+
+    /* Mobile Product Cards - COMPACT */
+    .mobile-product-card {
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border: 1px solid var(--gray-200);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .mobile-product-card.stock-zero {
+        border-left: 4px solid var(--danger);
+    }
+    
+    .mobile-product-card.stock-low {
+        border-left: 4px solid var(--warning);
+    }
+
+    .mobile-product-card.stock-ok {
+        border-left: 4px solid var(--success);
+    }
+
+    .mp-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        gap: 10px;
+    }
+
+    .mp-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-400);
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .mp-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .mp-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin: 0 0 2px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mp-code {
+        font-family: monospace;
+        background: var(--gray-100);
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 11px;
+        color: var(--gray-600);
+    }
+
+    .mp-badges {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .mp-badge {
+        font-size: 9px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .mp-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid var(--gray-100);
+        border-bottom: 1px solid var(--gray-100);
+        margin-bottom: 8px;
+    }
+
+    .mp-stat {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mp-stat-right {
+        align-items: flex-end;
+    }
+
+    .mp-stat-label {
+        font-size: 10px;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .mp-stat-value {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .mp-price {
+        color: var(--success);
+    }
+
+    .mp-actions {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+
+    .mp-btn {
+        padding: 6px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 13px;
+        border: none;
     }
 </style>
 

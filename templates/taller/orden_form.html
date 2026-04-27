@@ -155,20 +155,36 @@
     .wizard-body {
         padding: 40px;
         min-height: 500px;
+        position: relative; /* Para animaciones absolutas si es necesario */
+        overflow-x: hidden; /* Evita scroll horizontal durante animación */
     }
 
     .wizard-step {
         display: none;
+        width: 100%;
     }
 
     .wizard-step.active {
         display: block;
-        animation: fadeIn 0.3s ease;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Animaciones de Deslizamiento (Estilo iOS/Android) */
+    .wizard-step.slide-in-right {
+        animation: slideInRight 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+    
+    .wizard-step.slide-in-left {
+        animation: slideInLeft 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     .step-title {
@@ -485,8 +501,8 @@
     }
 
     .qty-btn {
-        width: 24px;
-        height: 24px;
+        width: 32px; /* Más grande para táctil */
+        height: 32px;
         border: none;
         border-radius: 4px;
         background: var(--primary);
@@ -495,8 +511,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.875rem;
-        transition: background 0.3s ease;
+        font-size: 1rem;
+        transition: transform 0.1s ease, background 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .qty-btn:active {
+        transform: scale(0.9);
     }
 
     .qty-btn:hover {
@@ -649,6 +670,11 @@
         background: var(--primary);
         color: white;
         box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-primary:active {
+        transform: scale(0.96);
     }
 
     .btn-primary:hover {
@@ -766,36 +792,108 @@
         display: none !important;
     }
 
-    /* RESPONSIVE */
+    /* RESPONSIVE - ARQUITECTURA NATIVA (Fixed UI Mejorada) */
     @media (max-width: 768px) {
+        body {
+            /* Permitimos el scroll en el body principal pero añadimos padding para el footer */
+            padding-bottom: 90px;
+        }
+
+        .wizard-container {
+            margin: 0;
+            padding: 0;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* Ocultar header principal para ganar espacio */
+        .wizard-header {
+            display: none;
+        }
+
+        /* Barra de Progreso Minimalista Fija Arriba */
+        .wizard-progress {
+            position: sticky;
+            top: 0;
+            margin-bottom: 0;
+            padding: 15px;
+            border-radius: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 1040;
+            background: white;
+        }
+
+        .progress-steps {
+            flex-wrap: nowrap;
+        }
+
+        .step-label {
+            display: none; /* Ocultar texto en móviles */
+        }
+
+        .step {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+            margin: 0 auto;
+        }
+
+        .progress-steps::before, .progress-line {
+            top: 15px;
+        }
+
+        /* Contenido Scrolleable */
+        .wizard-content {
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible; /* Dejamos que el body maneje el scroll */
+            padding-bottom: 20px;
+        }
+
+        .wizard-body {
+            padding: 20px 15px;
+            min-height: auto;
+        }
+
+        /* Footer Pegajoso Fijo Abajo */
+        .wizard-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            flex-direction: row; /* Botones al lado */
+            justify-content: space-between;
+            background: white;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 1050;
+            border-top: none;
+        }
+
+        .btn {
+            width: 48%; /* Dos botones lado a lado */
+            padding: 12px 10px;
+            font-size: 14px;
+        }
+        
+        .wizard-footer > div {
+            width: 48%;
+            display: flex;
+        }
+        
+        .wizard-footer > div .btn {
+            width: 100%;
+        }
+
         .form-row.cols-2,
         .form-row.cols-3,
         .form-row.cols-4 {
             grid-template-columns: 1fr;
-        }
-
-        .wizard-body {
-            padding: 24px;
-        }
-
-        .wizard-footer {
-            padding: 20px 24px;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .btn {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .progress-steps {
-            flex-wrap: wrap;
-        }
-
-        .step {
-            flex: 0 0 50%;
-            margin-bottom: 20px;
         }
 
         .search-container {
@@ -1642,22 +1740,32 @@ function nextStep() {
     
     if (CONFIG.currentStep < CONFIG.totalSteps) {
         CONFIG.currentStep++;
-        updateWizard();
+        updateWizard('next');
     }
 }
 
 function prevStep() {
     if (CONFIG.currentStep > 1) {
         CONFIG.currentStep--;
-        updateWizard();
+        updateWizard('prev');
     }
 }
 
-function updateWizard() {
-    // Actualizar steps visibles
-    document.querySelectorAll('.wizard-step').forEach(step => step.classList.remove('active'));
+function updateWizard(direction = 'next') {
+    // Actualizar steps visibles con animación de deslizamiento
+    document.querySelectorAll('.wizard-step').forEach(step => {
+        step.classList.remove('active', 'slide-in-right', 'slide-in-left');
+    });
+    
     const currentStepEl = document.querySelector(`.wizard-step[data-step="${CONFIG.currentStep}"]`);
-    if (currentStepEl) currentStepEl.classList.add('active');
+    if (currentStepEl) {
+        currentStepEl.classList.add('active');
+        if (direction === 'next') {
+            currentStepEl.classList.add('slide-in-right');
+        } else if (direction === 'prev') {
+            currentStepEl.classList.add('slide-in-left');
+        }
+    }
 
     // Actualizar indicadores de progreso
     document.querySelectorAll('.step').forEach(step => {
@@ -1674,8 +1782,20 @@ function updateWizard() {
     const progress = ((CONFIG.currentStep - 1) / (CONFIG.totalSteps - 1)) * 100;
     document.getElementById('progressLine').style.width = progress + '%';
 
-    // Mostrar/ocultar botones
-    document.getElementById('btnPrev').style.display = CONFIG.currentStep > 1 ? 'inline-flex' : 'none';
+    // Mostrar/ocultar botones en footer
+    const btnPrev = document.getElementById('btnPrev');
+    const containerAcciones = document.querySelector('.wizard-footer > div');
+    
+    btnPrev.style.display = CONFIG.currentStep > 1 ? 'inline-flex' : 'none';
+    
+    // Si estamos en móvil y el btnPrev está oculto, que el otro botón ocupe el 100%
+    if (window.innerWidth <= 768) {
+        if (CONFIG.currentStep === 1) {
+            containerAcciones.style.width = '100%';
+        } else {
+            containerAcciones.style.width = '48%';
+        }
+    }
     
     if (CONFIG.currentStep === CONFIG.totalSteps) {
         document.getElementById('btnNext').style.display = 'none';
@@ -1686,8 +1806,13 @@ function updateWizard() {
         document.getElementById('btnSubmit').style.display = 'none';
     }
 
-    // Scroll al inicio
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll al inicio SOLO del contenedor del wizard en móviles, o de la página en desktop
+    if (window.innerWidth <= 768) {
+        const wizardContent = document.querySelector('.wizard-content');
+        if (wizardContent) wizardContent.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 function validateStep(step) {
