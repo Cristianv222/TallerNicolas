@@ -1256,9 +1256,15 @@
             #mobile-interface { 
                 display: flex !important; 
                 flex-direction: column; 
-                height: 100vh; 
-                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                height: 100dvh; /* Altura dinámica para móviles */
+                width: 100%;
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                right: 0; 
+                bottom: 0;
                 background: white;
+                z-index: 2000; /* Por encima de la cabecera del sitio */
             }
 
             .mobile-header {
