@@ -205,10 +205,10 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 # VPMOTOS CONFIGURATION
 # ============================================================
 VPMOTOS_SETTINGS = {
-    'COMPANY_NAME': os.environ.get('COMPANY_NAME', 'VPMOTOS - High Voltage'),
+    'COMPANY_NAME': os.environ.get('COMPANY_NAME', 'FULL MOTOS NICOLAS'),
     'COMPANY_ADDRESS': os.environ.get('COMPANY_ADDRESS', 'Ecuador Pichincha Cayambe Panamericana E35'),
     'COMPANY_PHONE': os.environ.get('COMPANY_PHONE', '0961278095'),
-    'COMPANY_EMAIL': os.environ.get('COMPANY_EMAIL', 'info@vp-motos.com'),
+    'COMPANY_EMAIL': os.environ.get('COMPANY_EMAIL', 'info@fullmotosnicolas.com'),
     'COMPANY_TAX_ID': os.environ.get('COMPANY_TAX_ID', '0401234567001'),
     'IVA_PERCENTAGE': float(os.environ.get('IVA_PERCENTAGE', '15.0')),
     'DEFAULT_CURRENCY': os.environ.get('DEFAULT_CURRENCY', 'USD'),

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar Orden{% else %}Nueva Orden{% endif %} - VPMOTOS{% endblock %}
+{% block title %}{% if object %}Editar Orden{% else %}Nueva Orden{% endif %} - FULL MOTOS NICOLAS{% endblock %}
 
 {% block extra_css %}
 <style>
     :root {
-        --primary: #2196f3;
-        --primary-dark: #1565c0;
+        --primary: #ff4b2b;
+        --primary-dark: #cc3b22;
         --success: #4caf50;
         --danger: #f44336;
         --warning: #ff9800;
@@ -149,7 +149,7 @@
         background: var(--surface);
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden;
+        overflow: visible;
     }
 
     .wizard-body {
@@ -292,7 +292,7 @@
         border-radius: 0 0 8px 8px;
         max-height: 300px;
         overflow-y: auto;
-        z-index: 1000;
+        z-index: 2000;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         display: none;
     }
@@ -797,6 +797,15 @@
             flex: 0 0 50%;
             margin-bottom: 20px;
         }
+
+        .search-container {
+            flex-direction: column !important;
+        }
+
+        .search-box {
+            width: 100%;
+            min-width: 0 !important;
+        }
     }
 </style>
 {% endblock %}
@@ -867,7 +876,7 @@
                     <h2 class="step-title">Información del Cliente</h2>
                     <p class="step-subtitle">Busque y seleccione el cliente para esta orden</p>
                     
-                    <div class="search-container" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px;">
+                    <div class="search-container" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px;" id="clientSearchContainer">
                         <div class="search-box" id="clienteSearchBox" style="flex: 1; margin-bottom: 0;">
                             <i class="fas fa-search search-icon"></i>
                             <input type="text" 
@@ -879,7 +888,7 @@
                             <div class="search-results" id="clienteSearchResults"></div>
                         </div>
                         <button type="button" class="btn btn-primary" onclick="showCreateCustomerModal()" style="height: 52px; white-space: nowrap;">
-                            <i class="fas fa-plus"></i> <span class="d-none d-md-inline">Nuevo Cliente</span>
+                            <i class="fas fa-plus"></i> <span>Nuevo</span>
                         </button>
                     </div>
 
@@ -1193,138 +1202,7 @@
     </form>
 </div>
 
-<!-- Modal Nuevo Cliente -->
-<div class="modal fade" id="createCustomerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Crear Nuevo Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="createCustomerForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Identificación (Cédula/RUC) *</label>
-                            <input type="text" name="identificacion" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Tipo de Identificación *</label>
-                            <select name="tipo_identificacion" class="form-select" required>
-                                <option value="CEDULA">Cédula</option>
-                                <option value="RUC">RUC</option>
-                                <option value="PASAPORTE">Pasaporte</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Nombres *</label>
-                            <input type="text" name="nombres" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Apellidos *</label>
-                            <input type="text" name="apellidos" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" name="telefono" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Dirección</label>
-                        <textarea name="direccion" class="form-control" rows="2"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btnSaveCustomer" onclick="handleCreateCustomer()">Guardar Cliente</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<script>
-// ========================================
-// GESTIÓN DE CLIENTES DE FORMA RÁPIDA
-// ========================================
-function showCreateCustomerModal() {
-    const modal = new bootstrap.Modal(document.getElementById('createCustomerModal'));
-    document.getElementById('createCustomerForm').reset();
-    modal.show();
-}
-
-async function handleCreateCustomer() {
-    const form = document.getElementById('createCustomerForm');
-    const btn = document.getElementById('btnSaveCustomer');
-    const formData = new FormData(form);
-    
-    // Validar identificación
-    const id = formData.get('identificacion');
-    const tipo = formData.get('tipo_identificacion');
-    if (!validateIdentification(id, tipo)) {
-        alert('Identificación inválida');
-        return;
-    }
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
-    
-    try {
-        const response = await fetch('/clientes/api/crear-rapido/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': getCsrfToken()
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Seleccionar el cliente creado
-            selectCliente({
-                id: data.cliente.id,
-                nombres: data.cliente.nombres,
-                apellidos: data.cliente.apellidos,
-                identificacion: data.cliente.identificacion,
-                telefono: data.cliente.telefono,
-                email: data.cliente.email,
-                direccion: data.cliente.direccion
-            });
-            
-            // Cerrar modal
-            bootstrap.Modal.getInstance(document.getElementById('createCustomerModal')).hide();
-            showToast('Cliente creado y seleccionado', 'success');
-        } else {
-            alert('Error: ' + data.mensaje);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al conectar con el servidor');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Guardar Cliente';
-    }
-}
-
-function validateIdentification(id, tipo) {
-    if (!id || id.length < 5) return false;
-    // Si es cédula y tiene 10 dígitos, podrías aplicar algoritmo aquí
-    return true;
-}
-
-function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
-</script>
 
 <!-- ========== MODAL DE SERVICIOS ========== -->
 <div class="modal fade" id="servicesModal" tabindex="-1">

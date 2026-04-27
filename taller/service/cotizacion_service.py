@@ -33,7 +33,7 @@ class CotizacionService:
                         size: A4;
                         margin: 1cm;
                         @top-center {
-                            content: "COTIZACIÓN - VPMOTOS";
+                            content: "COTIZACIÓN - FULL MOTOS NICOLAS";
                             font-size: 12px;
                             color: #666;
                         }
@@ -54,14 +54,14 @@ class CotizacionService:
                     .header {
                         text-align: center;
                         margin-bottom: 30px;
-                        border-bottom: 2px solid #4361ee;
+                        border-bottom: 2px solid #ff4b2b;
                         padding-bottom: 20px;
                     }
                     
                     .company-name {
                         font-size: 24px;
                         font-weight: bold;
-                        color: #4361ee;
+                        color: #ff4b2b;
                         margin-bottom: 5px;
                     }
                     
@@ -104,7 +104,7 @@ class CotizacionService:
                     }
                     
                     .services-table th, .parts-table th {
-                        background-color: #4361ee;
+                        background-color: #ff4b2b;
                         color: white;
                         font-weight: bold;
                     }
@@ -129,8 +129,8 @@ class CotizacionService:
                     .total-final {
                         font-size: 16px;
                         font-weight: bold;
-                        color: #4361ee;
-                        border-top: 2px solid #4361ee;
+                        color: #ff4b2b;
+                        border-top: 2px solid #ff4b2b;
                         padding-top: 10px;
                         margin-top: 10px;
                     }
@@ -189,11 +189,11 @@ class CotizacionService:
                 'CustomTitle',
                 parent=styles['Heading1'],
                 fontSize=20,
-                textColor=colors.HexColor('#4361ee'),
+                textColor=colors.HexColor('#ff4b2b'),
                 alignment=1  # Center
             )
             
-            story.append(Paragraph("VPMOTOS", title_style))
+            story.append(Paragraph("FULL MOTOS NICOLAS", title_style))
             story.append(Paragraph("COTIZACIÓN DE SERVICIOS", styles['Heading2']))
             story.append(Spacer(1, 20))
             
@@ -233,7 +233,7 @@ class CotizacionService:
                 
                 servicios_table = Table(servicios_data, colWidths=[3*inch, 1*inch, 1.5*inch])
                 servicios_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4361ee')),
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff4b2b')),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                     ('FONTSIZE', (0, 0), (-1, -1), 10),
@@ -260,7 +260,7 @@ class CotizacionService:
                 
                 repuestos_table = Table(repuestos_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1*inch])
                 repuestos_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4361ee')),
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ff4b2b')),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                     ('FONTSIZE', (0, 0), (-1, -1), 10),
@@ -283,7 +283,7 @@ class CotizacionService:
             
             totales_table = Table(totales_data, colWidths=[3*inch, 2*inch])
             totales_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#4361ee')),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#ff4b2b')),
                 ('TEXTCOLOR', (0, -1), (-1, -1), colors.whitesmoke),
                 ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
                 ('FONTNAME', (0, 0), (0, -2), 'Helvetica-Bold'),
@@ -340,7 +340,7 @@ class CotizacionService:
             Esta cotización es válida por 15 días. Si tiene alguna consulta, no dude en contactarnos.
             
             Saludos cordiales,
-            VPMOTOS
+            FULL MOTOS NICOLAS
             """
             
             email = EmailMessage(

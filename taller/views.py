@@ -1337,10 +1337,10 @@ def generar_cotizacion_pdf(request, pk):
             'repuestos': orden.repuestos_utilizados.all(),
             'error': str(e),
             'empresa': {
-                'nombre': 'VPMOTOS',
-                'direccion': 'Dirección de la empresa',
-                'telefono': 'Teléfono',
-                'email': 'email@vpmotos.com'
+                'nombre': 'FULL MOTOS NICOLAS',
+                'direccion': 'Cayambe Panamericana E35, Ecuador',
+                'telefono': '0961278095',
+                'email': 'admin@full-motos-nicolas.valktek.com'
             }
         }
         html_content = render_to_string('taller/cotizacion_pdf.html', context)
@@ -1368,7 +1368,7 @@ def generar_orden_pdf(request, pk):
     
     try:
         # Cargar logo de forma segura en Base64 para WeasyPrint/HTML
-        logo_path = os.path.join(settings.BASE_DIR, 'static', 'logo_vp.png')
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'logo-FMN.png')
         logo_base64 = ""
         if os.path.exists(logo_path):
             with open(logo_path, "rb") as image_file:
@@ -1385,10 +1385,10 @@ def generar_orden_pdf(request, pk):
             'totales': cotizacion_data['totales'],
             'logo_base64': logo_base64,
             'empresa': {
-                'nombre': 'VPMOTOS',
-                'direccion': 'Dirección de la empresa',
-                'telefono': 'Teléfono',
-                'email': 'email@vpmotos.com'
+                'nombre': 'FULL MOTOS NICOLAS',
+                'direccion': 'Cayambe Panamericana E35, Ecuador',
+                'telefono': '0961278095',
+                'email': 'admin@full-motos-nicolas.valktek.com'
             }
         }
         
@@ -1403,7 +1403,7 @@ def generar_orden_pdf(request, pk):
                 @page {
                     size: A4;
                     margin: 1cm;
-                    @top-center { content: "ORDEN DE TRABAJO - VPMOTOS"; font-size: 10px; color: #666; }
+                    @top-center { content: "ORDEN DE TRABAJO - FULL MOTOS NICOLAS"; font-size: 10px; color: #666; }
                     @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 10px; color: #666; }
                 }
             ''')
