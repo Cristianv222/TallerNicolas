@@ -1296,14 +1296,13 @@
             }
 
             .mobile-footer-total {
-                padding: 1rem;
-                padding-bottom: calc(1rem + env(safe-area-inset-bottom)); /* Ajuste para teléfonos modernos */
-                background: white;
-                box-shadow: 0 -15px 30px rgba(0,0,0,0.1);
+                padding: 0.75rem 1rem;
+                background: #fdfdfd;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
                 display: flex; justify-content: space-between; align-items: center;
                 border-top: 1px solid #e2e8f0;
                 position: relative;
-                z-index: 1000; /* Siempre al frente */
+                z-index: 1000;
             }
 
             /* Payment Drawer */
@@ -1320,8 +1319,12 @@
             .payment-drawer.open { bottom: 0; }
             
             /* Asegurar que el modal de confirmación esté por encima del drawer */
-            .modal { z-index: 4000 !important; }
-            .modal-backdrop { z-index: 3999 !important; }
+            .modal { z-index: 6000 !important; }
+            .modal-backdrop { z-index: 5999 !important; }
+
+            /* Menú lateral por encima del POS */
+            .mobile-sidebar { z-index: 8000 !important; }
+            .mobile-sidebar-overlay { z-index: 7999 !important; }
         }
     </style>
 {% endblock %}
@@ -1444,7 +1447,7 @@
     <div id="mobile-interface">
         <div class="mobile-header">
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-link p-0 text-dark" onclick="toggleSidebar()"><i class="bi bi-list fs-2"></i></button>
+                <button class="btn btn-link p-0 text-dark" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-2"></i></button>
                 <h6 class="mb-0 fw-bold">POS Móvil</h6>
             </div>
             <div class="fw-bold text-primary fs-5" id="mobile-total-header">S/ 0.00</div>
@@ -1457,12 +1460,22 @@
             <button class="m-action-btn text-primary" onclick="showAllSalesModal()"><i class="bi bi-receipt-cutoff"></i><span>VENTAS</span></button>
         </div>
 
+        <!-- Barra de Cobro ahora arriba para evitar que se esconda -->
+        <div class="mobile-footer-total border-bottom border-top-0">
+            <div>
+                <div class="small text-muted">Total:</div>
+                <div class="fw-bold fs-4 text-dark" id="totalAmountMobileFooter">S/ 0.00</div>
+            </div>
+            <button id="btnOpenDrawer" class="btn btn-success btn-lg px-4 fw-bold shadow" onclick="togglePaymentDrawer(true)">
+                COBRAR <i class="bi bi-chevron-down ms-1"></i>
+            </button>
+        </div>
+
         <div class="mobile-cart-container">
             <div id="cartItemsMobile">
                 <!-- Items de carrito fluyen aquí -->
             </div>
             
-            <!-- Desglose de Totales siempre visible al final del scroll -->
             <div id="mobile-cart-summary" class="p-3 bg-light border-top" style="display: none;">
                 <div class="d-flex justify-content-between text-muted small mb-1">
                     <span>Subtotal:</span>
@@ -1472,21 +1485,7 @@
                     <span>IVA (15%):</span>
                     <span id="taxAmountMobileMain">S/ 0.00</span>
                 </div>
-                <div class="d-flex justify-content-between fw-bold text-dark fs-5">
-                    <span>TOTAL:</span>
-                    <span id="totalAmountMobileMain">S/ 0.00</span>
-                </div>
             </div>
-        </div>
-
-        <div class="mobile-footer-total">
-            <div>
-                <div class="small text-muted">Total a pagar:</div>
-                <div class="fw-bold fs-4 text-dark" id="totalAmountMobileFooter">S/ 0.00</div>
-            </div>
-            <button id="btnOpenDrawer" class="btn btn-success btn-lg px-4 fw-bold shadow" onclick="togglePaymentDrawer(true)">
-                COBRAR <i class="bi bi-chevron-up ms-1"></i>
-            </button>
         </div>
 
         <!-- Cajón de Pago -->
