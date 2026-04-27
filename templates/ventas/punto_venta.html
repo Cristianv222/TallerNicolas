@@ -3373,17 +3373,12 @@
     }
 
     function processOrderData(orderData) {
-        cart = [];
-
-        /* COMENTADO POR SOLICITUD DEL USUARIO: SIEMPRE CONSUMIDOR FINAL 
-        if (orderData.cliente) {
-            selectCustomer(
-                orderData.cliente.id,
-                orderData.cliente.nombre_completo,
-                orderData.cliente.identificacion
-            );
+        // Verificar si la orden ya está en el carrito para no duplicarla
+        const existeOrden = cart.find(item => item.type === 'orden_trabajo' && item.id === orderData.id);
+        if (existeOrden) {
+            showToast('Esta orden ya ha sido añadida al carrito', 'warning');
+            return;
         }
-        */
 
         const ordenItem = {
             id: orderData.id,
