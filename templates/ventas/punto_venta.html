@@ -1325,7 +1325,165 @@
             /* Menú lateral por encima del POS */
             .mobile-sidebar { z-index: 8000 !important; }
             .mobile-sidebar-overlay { z-index: 7999 !important; }
+
+            /* Bottom Sheet for Modals - ROBUST FIX */
+            .modal.bottom-sheet-mobile.show {
+                display: flex !important;
+                align-items: flex-end;
+                justify-content: center;
+                background: rgba(0,0,0,0.5); /* Sombra de fondo manual si el backdrop falla */
+            }
+
+            .modal.bottom-sheet-mobile .modal-dialog {
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                transform: translateY(100%);
+                transition: transform 0.3s cubic-bezier(0, 0, 0.2, 1);
+            }
+
+            .modal.bottom-sheet-mobile.show .modal-dialog {
+                transform: translateY(0);
+            }
+
+            .modal.bottom-sheet-mobile .modal-content {
+                border-radius: 24px 24px 0 0 !important;
+                border: none !important;
+                max-height: 85vh;
+                box-shadow: 0 -10px 25px rgba(0,0,0,0.1);
+            }
+
+            /* Handle bar for bottom sheet */
+            .modal.bottom-sheet-mobile .modal-header::before {
+                content: "";
+                width: 40px;
+                height: 4px;
+                background: #e2e8f0;
+                border-radius: 2px;
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 10;
+            }
+
+            .modal.bottom-sheet-mobile .modal-header {
+                padding-top: 1.5rem;
+                border-bottom: 1px solid #f1f5f9;
+                position: relative;
+            }
+
+
+            /* Premium Product Items */
+            .premium-product-item {
+                background: white;
+                border-radius: 16px;
+                padding: 1.2rem;
+                margin-bottom: 0.75rem;
+                border: 1px solid #f1f5f9;
+                transition: all 0.2s;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            }
+
+            .premium-product-item:active {
+                background: #f8fafc;
+                transform: scale(0.98);
+            }
+
+            .product-info-main { flex: 1; }
+            .product-name-main { font-weight: 700; color: #1e293b; margin-bottom: 2px; font-size: 0.95rem; }
+            .product-code-sub { font-size: 0.75rem; color: #64748b; font-family: monospace; }
+            
+            .product-price-badge {
+                background: #eff6ff;
+                color: #2563eb;
+                padding: 6px 12px;
+                border-radius: 10px;
+                font-weight: 800;
+                font-size: 1rem;
+            }
+
+            .stock-indicator {
+                font-size: 0.7rem;
+                font-weight: 700;
+                padding: 3px 8px;
+                border-radius: 6px;
+                margin-top: 5px;
+                display: inline-block;
+            }
+            .stock-ok { background: #dcfce7; color: #15803d; }
+            .stock-low { background: #fef9c3; color: #854d0e; }
+            .stock-none { background: #fee2e2; color: #b91c1c; }
+
+            /* Cart Item Premium Mobile */
+            .cart-item-mobile {
+                background: white;
+                border-radius: 16px;
+                padding: 1rem;
+                margin-bottom: 0.8rem;
+                border: 1px solid #f1f5f9;
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            }
+
+            .cart-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+            .cart-item-title { font-weight: 700; color: #1e293b; font-size: 0.9rem; flex: 1; padding-right: 10px; }
+            
+            .cart-item-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #f8fafc;
+                padding: 0.6rem 1rem;
+                border-radius: 12px;
+            }
+
+            .mobile-qty-stepper {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .stepper-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                border: none;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                color: var(--pos-primary);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+
+            .stepper-val { font-weight: 800; font-size: 1.1rem; color: #1e293b; min-width: 25px; text-align: center; }
+
+            .cart-item-price-total { font-weight: 800; color: #10b981; font-size: 1rem; }
+
+            /* Search bar animation */
+            .modal-search {
+                transition: all 0.3s;
+                border: 2px solid #e2e8f0 !important;
+                padding: 0.8rem 1rem !important;
+                border-radius: 12px !important;
+            }
+            /* Animations */
+            @keyframes bounceIn {
+                0% { transform: scale(0.9); opacity: 0; }
+                60% { transform: scale(1.02); opacity: 1; }
+                100% { transform: scale(1); }
+            }
+            .cart-item-mobile {
+                animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
         }
+
+
     </style>
 {% endblock %}
 
@@ -1610,7 +1768,7 @@
 </div>
 
 <!-- ✅ MODAL DE CLIENTES (MEJORADO) -->
-<div class="modal fade" id="customerModal" tabindex="-1">
+<div class="modal fade bottom-sheet-mobile" id="customerModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -1744,7 +1902,7 @@
 
 <!-- RESTO DE MODALES (Órdenes, Servicios, Productos, etc.) - MANTENER COMO ESTÁ -->
 <!-- Modal de Órdenes -->
-<div class="modal fade" id="ordersModal" tabindex="-1">
+<div class="modal fade bottom-sheet-mobile" id="ordersModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -1768,7 +1926,7 @@
 </div>
 
 <!-- Modal de Servicios -->
-<div class="modal fade" id="servicesModal" tabindex="-1">
+<div class="modal fade bottom-sheet-mobile" id="servicesModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -1792,7 +1950,7 @@
 </div>
 
 <!-- Modal de Productos -->
-<div class="modal fade" id="productsModal" tabindex="-1">
+<div class="modal fade bottom-sheet-mobile" id="productsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -2434,6 +2592,8 @@
     }
 
     function updateCartDisplay() {
+        const isMobile = window.innerWidth < 992;
+        
         const html = cart.map((item, index) => {
             const itemTotalPrice = item.price * item.quantity;
             let itemDescPct = item.descuento_porcentaje || 0;
@@ -2450,7 +2610,38 @@
                 netItemTotal = itemTotalPrice - itemDesc;
             }
 
-            // Unificado para ambos
+            if (isMobile) {
+                return `
+                <div class="cart-item-mobile">
+                    <div class="cart-item-header">
+                        <div class="cart-item-title">
+                            ${escapeHtml(item.name)}
+                            ${item.technician_name ? `<div class="small text-primary mt-1"><i class="bi bi-person-badge"></i> ${escapeHtml(item.technician_name)}</div>` : ''}
+                            <div class="small text-muted mt-1">${escapeHtml(item.code)} | S/ ${item.price.toFixed(2)}</div>
+                        </div>
+                        <button class="btn btn-link text-danger p-0" onclick="removeFromCart(${index})">
+                            <i class="bi bi-trash-fill fs-5"></i>
+                        </button>
+                    </div>
+                    <div class="cart-item-controls">
+                        <div class="mobile-qty-stepper">
+                            <button class="stepper-btn" onclick="updateQuantity(${index}, ${item.quantity - 1})">-</button>
+                            <span class="stepper-val">${item.quantity}</span>
+                            <button class="stepper-btn" onclick="updateQuantity(${index}, ${item.quantity + 1})">+</button>
+                        </div>
+                        <div class="cart-item-price-total">S/ ${netItemTotal.toFixed(2)}</div>
+                    </div>
+                    <div class="mt-2 d-flex align-items-center gap-2">
+                        <span class="small text-muted">Desc:</span>
+                        <div class="input-group input-group-sm" style="max-width: 80px;">
+                            <input type="number" class="form-control border-0 bg-light" value="${itemDescPct}" onchange="updateDiscount(${index}, this.value)">
+                            <span class="input-group-text border-0 bg-light">%</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
             return `
             <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
                 <div style="flex: 1;">
@@ -3345,19 +3536,34 @@
     function displayOrders(orders) {
         const resultsContainer = document.getElementById('orderResults');
         if (!resultsContainer) return;
+        const isMobile = window.innerWidth < 992;
 
-        resultsContainer.innerHTML = orders.map(order => `
-        <div class="modal-item" onclick="selectOrder(${order.id})">
-            <div class="item-header">
-                <h6 class="item-title">O.T. #${escapeHtml(order.numero_orden)}</h6>
-                <span class="item-price">S/ ${order.precio_total.toFixed(2)}</span>
+        resultsContainer.innerHTML = orders.map(order => {
+            if (isMobile) {
+                return `
+                <div class="premium-product-item" onclick="selectOrder(${order.id})">
+                    <div class="product-info-main">
+                        <div class="product-name-main">O.T. #${escapeHtml(order.numero_orden)}</div>
+                        <div class="product-code-sub">${escapeHtml(order.cliente_nombre)}</div>
+                        <span class="stock-indicator stock-ok">${escapeHtml(order.vehiculo || 'Sin vehículo')}</span>
+                    </div>
+                    <div class="product-price-badge">S/ ${order.precio_total.toFixed(2)}</div>
+                </div>
+                `;
+            }
+            return `
+            <div class="modal-item" onclick="selectOrder(${order.id})">
+                <div class="item-header">
+                    <h6 class="item-title">O.T. #${escapeHtml(order.numero_orden)}</h6>
+                    <span class="item-price">S/ ${order.precio_total.toFixed(2)}</span>
+                </div>
+                <div class="item-meta">
+                    <span>${escapeHtml(order.cliente_nombre)}</span>
+                    <span>${escapeHtml(order.vehiculo || 'Sin vehículo')}</span>
+                </div>
             </div>
-            <div class="item-meta">
-                <span>${escapeHtml(order.cliente_nombre)}</span>
-                <span>${escapeHtml(order.vehiculo || 'Sin vehículo')}</span>
-            </div>
-        </div>
-    `).join('');
+            `;
+        }).join('');
     }
 
     function searchOrders() {
@@ -3458,24 +3664,39 @@
     function displayServices(serviceList) {
         const resultsContainer = document.getElementById('serviceResults');
         if (!resultsContainer) return;
+        const isMobile = window.innerWidth < 992;
 
         if (serviceList.length === 0) {
             resultsContainer.innerHTML = '<p style="text-align: center;">No hay servicios disponibles</p>';
             return;
         }
 
-        resultsContainer.innerHTML = serviceList.map(service => `
-        <div class="modal-item" onclick="selectServiceFromModal(${service.id})">
-            <div class="item-header">
-                <h6 class="item-title">${escapeHtml(service.nombre)}</h6>
-                <span class="item-price">S/ ${service.precio_total.toFixed(2)}</span>
+        resultsContainer.innerHTML = serviceList.map(service => {
+            if (isMobile) {
+                return `
+                <div class="premium-product-item" onclick="selectServiceFromModal(${service.id})">
+                    <div class="product-info-main">
+                        <div class="product-name-main">${escapeHtml(service.nombre)}</div>
+                        <div class="product-code-sub">${escapeHtml(service.codigo)}</div>
+                        <span class="stock-indicator stock-ok">${service.categoria ? escapeHtml(service.categoria) : 'Servicio'}</span>
+                    </div>
+                    <div class="product-price-badge">S/ ${service.precio_total.toFixed(2)}</div>
+                </div>
+                `;
+            }
+            return `
+            <div class="modal-item" onclick="selectServiceFromModal(${service.id})">
+                <div class="item-header">
+                    <h6 class="item-title">${escapeHtml(service.nombre)}</h6>
+                    <span class="item-price">S/ ${service.precio_total.toFixed(2)}</span>
+                </div>
+                <div class="item-meta">
+                    <span>Código: ${escapeHtml(service.codigo)}</span>
+                    <span>${service.categoria ? escapeHtml(service.categoria) : 'Servicio'}</span>
+                </div>
             </div>
-            <div class="item-meta">
-                <span>Código: ${escapeHtml(service.codigo)}</span>
-                <span>${service.categoria ? escapeHtml(service.categoria) : 'Servicio'}</span>
-            </div>
-        </div>
-    `).join('');
+            `;
+        }).join('');
     }
 
     const searchServicesAjax = debounce(function () {
@@ -3629,24 +3850,43 @@
     function displayProductsInModal(productList) {
         const resultsContainer = document.getElementById('productResults');
         if (!resultsContainer) return;
+        const isMobile = window.innerWidth < 992;
 
         if (productList.length === 0) {
             resultsContainer.innerHTML = '<p style="text-align: center;">No hay productos disponibles</p>';
             return;
         }
 
-        resultsContainer.innerHTML = productList.map(product => `
-        <div class="modal-item" onclick="selectProductFromModal(${product.id})">
-            <div class="item-header">
-                <h6 class="item-title">${escapeHtml(product.nombre)}</h6>
-                <span class="item-price">S/ ${product.precio.toFixed(2)}</span>
+        resultsContainer.innerHTML = productList.map(product => {
+            if (isMobile) {
+                let stockClass = 'stock-ok';
+                if (product.stock <= 0) stockClass = 'stock-none';
+                else if (product.stock <= 5) stockClass = 'stock-low';
+
+                return `
+                <div class="premium-product-item" onclick="selectProductFromModal(${product.id})">
+                    <div class="product-info-main">
+                        <div class="product-name-main">${escapeHtml(product.nombre)}</div>
+                        <div class="product-code-sub">${escapeHtml(product.codigo)}</div>
+                        <span class="stock-indicator ${stockClass}">Stock: ${product.stock}</span>
+                    </div>
+                    <div class="product-price-badge">S/ ${product.precio.toFixed(2)}</div>
+                </div>
+                `;
+            }
+            return `
+            <div class="modal-item" onclick="selectProductFromModal(${product.id})">
+                <div class="item-header">
+                    <h6 class="item-title">${escapeHtml(product.nombre)}</h6>
+                    <span class="item-price">S/ ${product.precio.toFixed(2)}</span>
+                </div>
+                <div class="item-meta">
+                    <span>Código: ${escapeHtml(product.codigo)}</span>
+                    <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning text-dark' : 'bg-danger'}">Stock: ${product.stock}</span>
+                </div>
             </div>
-            <div class="item-meta">
-                <span>Código: ${escapeHtml(product.codigo)}</span>
-                <span class="badge ${product.stock > 10 ? 'bg-success' : product.stock > 0 ? 'bg-warning text-dark' : 'bg-danger'}">Stock: ${product.stock}</span>
-            </div>
-        </div>
-    `).join('');
+            `;
+        }).join('');
     }
 
     const searchProductsAjax = debounce(function() {

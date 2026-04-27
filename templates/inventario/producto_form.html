@@ -80,64 +80,55 @@
 
                             <!-- IMÁGENES -->
                             <div class="col-12">
-                                <label class="form-label fw-semibold">Imágenes del Producto</label>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.imagen.id_for_label }}" class="form-label small">Imagen Principal</label>
-                                        {% if form.instance.imagen %}
-                                        <div class="mb-2">
-                                            <img src="{{ form.instance.imagen.url }}" alt="Imagen Principal"
-                                                class="img-thumbnail" style="max-height: 150px; display:block;">
-                                            <span class="badge bg-success mt-1 d-inline-block">
-                                                <i class="fas fa-check me-1"></i>Imagen actual
-                                            </span>
-                                            <div class="form-text text-warning">
-                                                <i class="fas fa-info-circle me-1"></i>Sube una nueva para reemplazarla
+                                <label class="form-label fw-bold"><i class="fas fa-images me-2 text-primary"></i>Imágenes del Producto</label>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                        <div class="image-upload-card p-3 border rounded bg-light h-100">
+                                            <label for="{{ form.imagen.id_for_label }}" class="form-label small fw-semibold">Imagen Principal</label>
+                                            {% if form.instance.imagen %}
+                                            <div class="mb-2 text-center">
+                                                <img src="{{ form.instance.imagen.url }}" alt="Imagen Principal"
+                                                    class="img-thumbnail shadow-sm" style="max-height: 120px; object-fit: contain;">
+                                                <div class="badge bg-success mt-2 d-block">Actual</div>
                                             </div>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="{{ form.imagen.id_for_label }}"
+                                                name="{{ form.imagen.name }}" accept="image/*">
                                         </div>
-                                        {% endif %}
-                                        <input type="file" class="form-control mt-1"
-                                            id="{{ form.imagen.id_for_label }}"
-                                            name="{{ form.imagen.name }}" accept="image/*">
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.imagen_2.id_for_label }}" class="form-label small">Imagen 2</label>
-                                        {% if form.instance.imagen_2 %}
-                                        <div class="mb-2">
-                                            <img src="{{ form.instance.imagen_2.url }}" alt="Imagen 2"
-                                                class="img-thumbnail" style="max-height: 150px; display:block;">
-                                            <span class="badge bg-success mt-1 d-inline-block">
-                                                <i class="fas fa-check me-1"></i>Imagen actual
-                                            </span>
-                                            <div class="form-text text-warning">
-                                                <i class="fas fa-info-circle me-1"></i>Sube una nueva para reemplazarla
+                                    <div class="col-12 col-md-4">
+                                        <div class="image-upload-card p-3 border rounded bg-light h-100">
+                                            <label for="{{ form.imagen_2.id_for_label }}" class="form-label small fw-semibold">Imagen 2</label>
+                                            {% if form.instance.imagen_2 %}
+                                            <div class="mb-2 text-center">
+                                                <img src="{{ form.instance.imagen_2.url }}" alt="Imagen 2"
+                                                    class="img-thumbnail shadow-sm" style="max-height: 120px; object-fit: contain;">
+                                                <div class="badge bg-success mt-2 d-block">Actual</div>
                                             </div>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="{{ form.imagen_2.id_for_label }}"
+                                                name="{{ form.imagen_2.name }}" accept="image/*">
                                         </div>
-                                        {% endif %}
-                                        <input type="file" class="form-control mt-1"
-                                            id="{{ form.imagen_2.id_for_label }}"
-                                            name="{{ form.imagen_2.name }}" accept="image/*">
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="{{ form.imagen_3.id_for_label }}" class="form-label small">Imagen 3</label>
-                                        {% if form.instance.imagen_3 %}
-                                        <div class="mb-2">
-                                            <img src="{{ form.instance.imagen_3.url }}" alt="Imagen 3"
-                                                class="img-thumbnail" style="max-height: 150px; display:block;">
-                                            <span class="badge bg-success mt-1 d-inline-block">
-                                                <i class="fas fa-check me-1"></i>Imagen actual
-                                            </span>
-                                            <div class="form-text text-warning">
-                                                <i class="fas fa-info-circle me-1"></i>Sube una nueva para reemplazarla
+                                    <div class="col-12 col-md-4">
+                                        <div class="image-upload-card p-3 border rounded bg-light h-100">
+                                            <label for="{{ form.imagen_3.id_for_label }}" class="form-label small fw-semibold">Imagen 3</label>
+                                            {% if form.instance.imagen_3 %}
+                                            <div class="mb-2 text-center">
+                                                <img src="{{ form.instance.imagen_3.url }}" alt="Imagen 3"
+                                                    class="img-thumbnail shadow-sm" style="max-height: 120px; object-fit: contain;">
+                                                <div class="badge bg-success mt-2 d-block">Actual</div>
                                             </div>
+                                            {% endif %}
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="{{ form.imagen_3.id_for_label }}"
+                                                name="{{ form.imagen_3.name }}" accept="image/*">
                                         </div>
-                                        {% endif %}
-                                        <input type="file" class="form-control mt-1"
-                                            id="{{ form.imagen_3.id_for_label }}"
-                                            name="{{ form.imagen_3.name }}" accept="image/*">
                                     </div>
                                 </div>
-                                <div class="form-text">Sube hasta 3 imágenes para mostrar en el e-commerce externo.</div>
+                                <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>Sube hasta 3 imágenes. Formatos recomendados: JPG, PNG.</div>
                             </div>
 
                             <!-- NOMBRE -->
@@ -402,61 +393,57 @@
                         </div>
 
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <strong>Información Básica</strong>
+                            <div class="col-12 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+                                        <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Información Básica</h6>
                                     </div>
-                                    <div class="card-body">
-                                        <table class="table table-sm mb-0">
-                                            <tr>
-                                                <td width="40%"><strong>Nombre:</strong></td>
-                                                <td id="review-nombre">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Código:</strong></td>
-                                                <td id="review-codigo">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Categoría:</strong></td>
-                                                <td id="review-categoria">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Marca:</strong></td>
-                                                <td id="review-marca">-</td>
-                                            </tr>
-                                        </table>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush rounded-bottom">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Nombre</span>
+                                                <span class="text-dark fw-bold" id="review-nombre">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Código</span>
+                                                <span class="badge bg-light text-dark border" id="review-codigo">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Categoría</span>
+                                                <span class="badge bg-info-subtle text-info border-info-subtle" id="review-categoria">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Marca</span>
+                                                <span class="badge bg-success-subtle text-success border-success-subtle" id="review-marca">-</span>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <strong>Precios y Stock</strong>
+                            <div class="col-12 col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header bg-success bg-opacity-10 border-0 py-3">
+                                        <h6 class="mb-0 fw-bold text-success"><i class="fas fa-dollar-sign me-2"></i>Precios y Stock</h6>
                                     </div>
-                                    <div class="card-body">
-                                        <table class="table table-sm mb-0">
-                                            <tr>
-                                                <td width="40%"><strong>P. Compra:</strong></td>
-                                                <td id="review-precio-compra">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>P. Venta:</strong></td>
-                                                <td id="review-precio-venta">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Stock Final:</strong></td>
-                                                <td id="review-stock">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Stock Mínimo:</strong></td>
-                                                <td id="review-stock-minimo">-</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Ubicación:</strong></td>
-                                                <td id="review-ubicacion">-</td>
-                                            </tr>
-                                        </table>
+                                    <div class="card-body p-0">
+                                        <ul class="list-group list-group-flush rounded-bottom">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Precio Compra</span>
+                                                <span class="text-dark fw-bold fs-5" id="review-precio-compra">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Precio Venta</span>
+                                                <span class="text-success fw-bold fs-4" id="review-precio-venta">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Stock Final</span>
+                                                <span class="badge bg-dark rounded-pill px-3" id="review-stock">-</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                <span class="text-muted small fw-semibold">Ubicación</span>
+                                                <span class="text-muted italic" id="review-ubicacion">-</span>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -466,21 +453,24 @@
                 </div>
 
                 <!-- Botones de navegación -->
-                <div class="row mt-4 pt-3 border-top">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <button type="button" class="btn btn-outline-secondary" id="btn-prev">
-                                <i class="fas fa-arrow-left me-1"></i> Anterior
-                            </button>
-                            <small class="text-muted">Paso <span id="current-step">1</span> de 4</small>
-                            <div>
-                                <button type="button" class="btn btn-primary" id="btn-next">
-                                    Siguiente <i class="fas fa-arrow-right ms-1"></i>
-                                </button>
-                                <button type="submit" class="btn btn-success d-none" id="btn-submit">
-                                    <i class="fas fa-save me-1"></i> Guardar Producto
-                                </button>
+                <div class="wizard-footer-actions mt-4 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-outline-secondary btn-lg-mobile" id="btn-prev">
+                            <i class="fas fa-arrow-left me-2"></i> <span class="d-none d-sm-inline">Anterior</span>
+                        </button>
+                        <div class="text-center">
+                            <div class="text-muted small fw-bold">PASO <span id="current-step" class="text-primary fs-5">1</span> de 4</div>
+                            <div class="progress mt-1 d-sm-none" style="height: 4px; width: 60px;">
+                                <div class="progress-bar" id="mobile-progress" style="width: 25%"></div>
                             </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary btn-lg-mobile shadow-sm" id="btn-next">
+                                <span class="d-none d-sm-inline">Siguiente</span> <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg-mobile shadow-sm d-none" id="btn-submit">
+                                <i class="fas fa-save me-2"></i> <span class="fw-bold">Guardar</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -756,6 +746,11 @@ $(document).ready(function () {
         $('.wizard-pane').removeClass('active');
         $(`.wizard-pane[data-step="${currentStep}"]`).addClass('active');
         $('#current-step').text(currentStep);
+        
+        // Actualizar barra de progreso móvil
+        const progressPercent = (currentStep / totalSteps) * 100;
+        $('#mobile-progress').css('width', progressPercent + '%');
+
         $('#btn-prev').prop('disabled', currentStep === 1);
         if (currentStep === totalSteps) {
             $('#btn-next').addClass('d-none');
@@ -986,9 +981,93 @@ $(document).ready(function () {
         transition: color 0.4s ease;
     }
     @media (max-width: 768px) {
-        .wizard-progress { padding: 0.5rem; }
-        .wizard-step-circle { width: 35px; height: 35px; }
-        .wizard-step-label { font-size: 0.65rem; }
+        .wizard-progress { 
+            padding: 0.75rem 0.5rem; 
+        }
+        .wizard-step-circle { 
+            width: 38px; 
+            height: 38px; 
+            font-size: 0.9rem;
+        }
+        .wizard-step-label { 
+            font-size: 0.6rem; 
+            max-width: 50px;
+            text-align: center;
+        }
+        .wizard-step-line {
+            margin: 0 0.5rem;
+            top: -16px;
+        }
+        
+        /* Footer pegajoso para móviles */
+        .wizard-footer-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.08);
+            z-index: 1040;
+            margin-top: 0 !important;
+        }
+        
+        .container-fluid {
+            padding-bottom: 80px; /* Espacio para el footer sticky */
+        }
+        
+        .btn-lg-mobile {
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
     }
+
+    @media (max-width: 450px) {
+        .wizard-step-label {
+            display: none;
+        }
+        .wizard-step-line {
+            top: 0;
+            margin: 0 0.25rem;
+            flex: 1;
+            height: 2px;
+            align-self: center;
+            position: static;
+        }
+        .wizard-progress {
+            justify-content: center;
+            gap: 10px;
+        }
+        .wizard-step {
+            flex-direction: row;
+        }
+    }
+
+    .image-upload-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .image-upload-card:hover {
+        border-color: var(--primary) !important;
+        background-color: white !important;
+    }
+    
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+    .list-group-item:first-child {
+        border-top: none;
+    }
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    .badge-info-subtle { background-color: #e0f2fe; color: #0369a1; }
+    .badge-success-subtle { background-color: #dcfce7; color: #15803d; }
 </style>
 {% endblock %}
