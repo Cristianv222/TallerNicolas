@@ -40,6 +40,18 @@ class TicketThermalService:
             'width': 32,
             'cut_command': b'\x1D\x56\x00',
             'drawer_command': b'\x1B\x70\x00\x19\xFA'
+        },
+        'TERMICA_80MM': {
+            'name': 'Térmica 80mm',
+            'width': 48,
+            'cut_command': b'\x1D\x56\x00',
+            'drawer_command': b'\x1B\x70\x00\x19\xFA'
+        },
+        'TERMICA_58MM': {
+            'name': 'Térmica 58mm',
+            'width': 32,
+            'cut_command': b'\x1D\x56\x00',
+            'drawer_command': b'\x1B\x70\x00\x19\xFA'
         }
     }
     
@@ -57,7 +69,7 @@ class TicketThermalService:
                     'id': str(p.id),
                     'name': p.nombre_driver or p.nombre,
                     'display_name': f"{p.nombre} ({p.get_tipo_conexion_display()})",
-                    'type': p.tipo_impresora or 'TERMICA_TICKET',
+                    'type': p.tipo_impresora or 'TERMICA_80MM',
                     'is_db': True,
                     'es_principal_tickets': p.es_principal_tickets,
                     'es_principal_facturas': p.es_principal_facturas
@@ -130,6 +142,7 @@ class TicketThermalService:
     @classmethod
     def generate_ticket_content(cls, venta, printer_type='GENERIC_80MM'):
         """Genera el contenido del ticket para impresión térmica"""
+        logger.info(f"📝 Iniciando generate_ticket_content para Venta={venta.id}, Tipo={printer_type}")
         config = cls.THERMAL_PRINTERS.get(printer_type, cls.THERMAL_PRINTERS['GENERIC_80MM'])
         width = config['width']
         
@@ -155,10 +168,11 @@ class TicketThermalService:
         lines = []
         
         # Header con nombre del negocio
-        empresa = getattr(settings, 'EMPRESA_NOMBRE', 'VPMOTOS')
-        ruc = getattr(settings, 'EMPRESA_RUC', '')
-        direccion = getattr(settings, 'EMPRESA_DIRECCION', '')
-        telefono = getattr(settings, 'EMPRESA_TELEFONO', '')
+        vpm_settings = getattr(settings, 'VPMOTOS_SETTINGS', {})
+        empresa = vpm_settings.get('COMPANY_NAME', 'VPMOTOS')
+        ruc = vpm_settings.get('COMPANY_TAX_ID', '')
+        direccion = vpm_settings.get('COMPANY_ADDRESS', '')
+        telefono = vpm_settings.get('COMPANY_PHONE', '')
         
         lines.append(center_text(empresa, width))
         if ruc:
@@ -174,16 +188,23 @@ class TicketThermalService:
         lines.append(center_text("TICKET DE VENTA", width))
         lines.append(separator_line(width))
         
-        fecha_hora = venta.fecha_hora.strftime("%d/%m/%Y %H:%M:%S")
+        from django.utils.timezone import localtime
+        fecha_hora = localtime(venta.fecha_hora).strftime("%d/%m/%Y %H:%M:%S")
         lines.append(f"Fecha: {fecha_hora}")
         lines.append(f"Ticket: {venta.numero_factura}")
-        lines.append(f"Cliente: {venta.cliente.get_nombre_completo()[:width-9]}")
-        if venta.cliente.identificacion != '9999999999':
-            lines.append(f"CI/RUC: {venta.cliente.identificacion}")
+        cliente_nombre = "CONSUMIDOR FINAL"
+        cliente_id = "9999999999"
+        if venta.cliente:
+            cliente_nombre = venta.cliente.get_nombre_completo()
+            cliente_id = venta.cliente.identificacion
+            
+        lines.append(f"Cliente: {cliente_nombre[:width-9]}")
+        if cliente_id != '9999999999':
+            lines.append(f"CI/RUC: {cliente_id}")
         
         # VENDEDOR RESALTADO
         lines.append(separator_line(width))
-        vendedor_nombre = (venta.usuario.get_full_name() or venta.usuario.username).upper()
+        vendedor_nombre = (venta.usuario.get_nombre_completo() or venta.usuario.usuario).upper()
         lines.append(center_text("VENDEDOR:", width))
         lines.append(center_text(vendedor_nombre, width))
         lines.append(separator_line(width))
@@ -196,6 +217,7 @@ class TicketThermalService:
         
         # Detalles de la venta
         for detalle in venta.detalleventa_set.all():
+            logger.info(f"   🔍 Procesando detalle: {detalle.id}")
             # Línea con cantidad y precio
             if detalle.nombre_personalizado:
                 descripcion = detalle.nombre_personalizado
@@ -305,7 +327,15 @@ class TicketThermalService:
             logger.info(f"Imprimiendo ticket: Venta={venta.id}, Impresora_solicitada='{printer_name}', BD_Found={db_printer is not None}")
 
             # Generar contenido del ticket (texto)
-            content = cls.generate_ticket_content(venta, printer_type)
+            p_type = printer_type
+            if db_printer:
+                if db_printer.ancho_papel < 60:
+                    p_type = 'TERMICA_58MM'
+                else:
+                    p_type = 'TERMICA_80MM'
+            
+            logger.info(f"🔄 Llamando a generate_ticket_content con tipo={p_type}")
+            content = cls.generate_ticket_content(venta, p_type)
             
             # Si es impresora de BD, enviar a la cola de trabajos del AGENTE
             # 🔥 ROBUSTEZ: Siempre enviar al agente si estamos en un entorno donde la impresión directa falla o es preferible el agente
@@ -314,7 +344,7 @@ class TicketThermalService:
                 
                 # Convertir contenido a HEX (formato que espera el agente)
                 # ESC @ (inicializar) + Contenido + GS V (corte)
-                config = cls.THERMAL_PRINTERS.get(printer_type, cls.THERMAL_PRINTERS['GENERIC_80MM'])
+                config = cls.THERMAL_PRINTERS.get(p_type, cls.THERMAL_PRINTERS['GENERIC_80MM'])
                 commands = b'\x1B\x40' + content.encode('utf-8', errors='ignore') + config['cut_command']
                 if open_drawer:
                     commands += config['drawer_command']
@@ -324,14 +354,17 @@ class TicketThermalService:
                 # Si no hay db_printer, usamos el printer_name tal cual
                 p_name = (db_printer.nombre_driver or db_printer.nombre) if db_printer else printer_name
                 
+                logger.info(f"🚀 Llamando a crear_trabajo_impresion para: {p_name}")
                 job_id = crear_trabajo_impresion(
                     usuario=user or venta.usuario,
                     impresora_nombre=p_name,
                     comandos_hex=comandos_hex,
                     tipo='TICKET',
+                    venta=venta,
                     prioridad=1,
                     abrir_gaveta=open_drawer
                 )
+                logger.info(f"✅ Respuesta de crear_trabajo_impresion: {job_id}")
                 
                 if job_id:
                     return True, f"Ticket enviado a la cola de impresión (ID: {job_id})"
@@ -375,6 +408,7 @@ class TicketThermalService:
                 return False, "Error al enviar ticket a la impresora"
                 
         except Exception as e:
+            logger.error(f"❌ Error crítico en print_ticket: {str(e)}", exc_info=True)
             return False, f"Error al imprimir ticket: {str(e)}"
     
     @classmethod
@@ -488,7 +522,13 @@ class TicketThermalService:
                 test_text += "--------------------------------\n"
                 test_text += "Prueba exitosa desde el punto de venta\n\n\n\n"
                 
-                config = cls.THERMAL_PRINTERS.get(printer_type, cls.THERMAL_PRINTERS['GENERIC_80MM'])
+                p_type = printer_type
+                if db_printer.ancho_papel < 60:
+                    p_type = 'GENERIC_58MM'
+                else:
+                    p_type = 'GENERIC_80MM'
+                
+                config = cls.THERMAL_PRINTERS.get(p_type, cls.THERMAL_PRINTERS['GENERIC_80MM'])
                 commands = b''.join([
                     b'\x1B\x40', 
                     test_text.encode('utf-8', errors='ignore'), 

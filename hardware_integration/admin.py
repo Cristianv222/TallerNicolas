@@ -161,6 +161,9 @@ class ImpresoraAdmin(admin.ModelAdmin):
     inlines = [GavetaDineroInline, PlantillaImpresionInline]
     actions = [test_conexion_impresoras, reiniciar_contador_impresoras]
 
+    class Media:
+        js = ('js/admin_impresora.js',)
+
     def save_model(self, request, obj, form, change):
         """
         Genera automáticamente el código si está vacío

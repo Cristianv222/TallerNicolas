@@ -19,11 +19,11 @@ class Impresora(models.Model):
     """
     
     TIPO_IMPRESORA_CHOICES = [
-        ('TERMICA_TICKET', 'Térmica de Tickets (80mm)'),
-        ('TERMICA_FACTURA', 'Térmica de Facturas (80mm con gaveta)'),
-        ('ETIQUETAS', 'Etiquetas/Códigos de Barras'),
-        ('LASER', 'Láser/Tinta (A4)'),
-        ('MATRIZ', 'Matriz de Puntos'),
+        ('TERMICA_80MM', 'Térmica 80mm (Facturas/Tickets)'),
+        ('TERMICA_58MM', 'Térmica 58mm (Tickets/Recibos)'),
+        ('ETIQUETAS', 'Impresora de Etiquetas'),
+        ('LASER_PDF', 'Láser / PDF (A4/Carta)'),
+        ('OTRA', 'Otra'),
     ]
     
     TIPO_CONEXION_CHOICES = [
@@ -319,6 +319,12 @@ class Impresora(models.Model):
         
         if self.tipo_conexion == 'DRIVER' and not self.nombre_driver:
             raise ValidationError('Para conexión por driver debe especificar el nombre del driver')
+        
+        # Ajustar ancho de papel según el tipo seleccionado si no se ha cambiado manualmente
+        if self.tipo_impresora == 'TERMICA_58MM' and (self.ancho_papel == 80 or not self.ancho_papel):
+            self.ancho_papel = 58
+        elif self.tipo_impresora == 'TERMICA_80MM' and (self.ancho_papel == 58 or not self.ancho_papel):
+            self.ancho_papel = 80
         
         # Validar configuración de etiquetas
         if self.tipo_impresora == 'ETIQUETAS':

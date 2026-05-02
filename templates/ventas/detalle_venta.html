@@ -463,7 +463,7 @@ async function loadPrinters() {
         const response = await fetch('/hardware/api/estado-impresoras/');
         const data = await response.json();
         if (data.success) {
-            availablePrinters = data.impresoras.filter(p => p.tipo === 'TICKET');
+            availablePrinters = data.impresoras.filter(p => ['TICKET', 'TERMICA_80MM', 'TERMICA_58MM'].includes(p.tipo));
         }
     } catch (error) {
         console.error('Error loading printers:', error);

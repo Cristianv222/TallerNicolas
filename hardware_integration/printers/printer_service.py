@@ -206,7 +206,8 @@ class PrinterService:
         comandos += b'\x1B\x21\x00'
         
         # Línea separadora
-        comandos += b'================================\n'
+        ancho = 32 if impresora.ancho_papel < 60 else 48
+        comandos += (b'=' * ancho) + b'\n'
         
         # ============================================
         # INFORMACIÓN DE IMPRESORA
@@ -222,14 +223,13 @@ class PrinterService:
         comandos += b'\x1B\x21\x00'  # Normal
         
         # Línea sólida
-        comandos += b'================================\n'
+        comandos += (b'=' * ancho) + b'\n'
         
         # ESC a 0 - Alinear izquierda
         comandos += b'\x1B\x61\x00'
         
         # Información (formato: label: valor)
-        def agregar_linea(label, valor):
-            ancho_total = 48
+        def agregar_linea(label, valor, ancho_total=ancho):
             label_con_espacios = f"{label}:"
             espacios_necesarios = ancho_total - len(label_con_espacios) - len(str(valor))
             if espacios_necesarios < 1:
@@ -258,7 +258,7 @@ class PrinterService:
             comandos += agregar_linea("Gaveta", "NO configurada")
         
         # Línea separadora
-        comandos += b'--------------------------------\n'
+        comandos += (b'-' * ancho) + b'\n'
         
         # Fecha y hora
         fecha_actual = timezone.now()
@@ -266,7 +266,7 @@ class PrinterService:
         comandos += agregar_linea("Hora", fecha_actual.strftime('%H:%M:%S'))
         
         # Línea separadora
-        comandos += b'================================\n'
+        comandos += (b'=' * ancho) + b'\n'
         
         # ============================================
         # CÓDIGO DE BARRAS (si soporta)
@@ -301,7 +301,7 @@ class PrinterService:
         comandos += b'\x1B\x21\x00'
         
         # Línea separadora
-        comandos += b'================================\n'
+        comandos += (b'=' * ancho) + b'\n'
         
         # ============================================
         # PIE DE PÁGINA
@@ -592,7 +592,7 @@ class PrinterService:
                     # Obtener usuario para crear el trabajo
                     try:
                         usuario = obtener_usuario_para_impresion()
-                        logger.debug(f"   Usuario asignado: {usuario.username} (ID:{usuario.id})")
+                        logger.debug(f"   Usuario asignado: {usuario.usuario} (ID:{usuario.id})")
                     except Exception as e:
                         raise Exception(f"No se pudo obtener un usuario válido: {str(e)}")
                     

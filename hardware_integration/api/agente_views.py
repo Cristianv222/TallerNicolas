@@ -140,7 +140,7 @@ def registrar_agente(request):
         tipo_usuario = "SISTEMA" if es_sistema else "NORMAL"
         
         logger.info(f"📝 Agente registrado: {computadora} - {usuario_pc} (v{version_agente})")
-        logger.info(f"   Usuario Django: {request.user.username} (ID: {request.user.id}) [Tipo: {tipo_usuario}]")
+        logger.info(f"   Usuario Django: {request.user.usuario} (ID: {request.user.id}) [Tipo: {tipo_usuario}]")
         logger.info(f"   Impresoras detectadas: {len(impresoras)}")
         
         if impresoras:
@@ -152,7 +152,7 @@ def registrar_agente(request):
         agente_info = {
             'computadora': computadora,
             'usuario_pc': usuario_pc,
-            'usuario_django': request.user.username,
+            'usuario_django': request.user.usuario,
             'usuario_id': request.user.id,
             'es_sistema': es_sistema,  # 🔥 NUEVO
             'version': version_agente,
@@ -166,7 +166,7 @@ def registrar_agente(request):
             'success': True,
             'mensaje': 'Agente registrado correctamente',
             'server_time': timezone.now().isoformat(),
-            'usuario': request.user.username,
+            'usuario': request.user.usuario,
             'usuario_id': request.user.id,
             'es_sistema': es_sistema,  # 🔥 NUEVO
             'impresoras_registradas': len(impresoras)
@@ -195,17 +195,10 @@ def obtener_trabajos_pendientes(request):
     - Usuario normal → Solo ve sus propios trabajos
     """
     try:
-        # 🔥 ESCUDO DE RAM: Comprobar en Redis si hay trabajos para este usuario
-        # Si la caché dice que no hay nada, respondemos en <1ms sin tocar la DB
-        cache_key_vacio = f"print_queue_empty_{request.user.id}"
-        if cache.get(cache_key_vacio) is True:
-            return Response({
-                'trabajos': [],
-                'count': 0,
-                'es_sistema': es_usuario_sistema(request.user),
-                'timestamp': timezone.now().isoformat(),
-                'cache_hit': True
-            }, status=status.HTTP_200_OK)
+        # Cache temporalmente desactivado para depuración
+        # cache_key_vacio = f"print_queue_empty_{request.user.id}"
+        # if cache.get(cache_key_vacio) is True:
+        #     ...
 
         # 🔥 DETECTAR TIPO DE USUARIO
         es_sistema = es_usuario_sistema(request.user)
@@ -219,7 +212,7 @@ def obtener_trabajos_pendientes(request):
                 'fecha_creacion'
             )[:10]
             
-            # logger.debug(f"🔓 Usuario SISTEMA '{request.user.username}' consultando TODOS los trabajos")
+            # logger.debug(f"🔓 Usuario SISTEMA '{request.user.usuario}' consultando TODOS los trabajos")
         else:
             # ✅ Usuario normal → Solo sus propios trabajos
             trabajos_query = TrabajoImpresion.objects.filter(
@@ -230,7 +223,7 @@ def obtener_trabajos_pendientes(request):
                 'fecha_creacion'
             )[:10]
             
-            logger.debug(f"🔒 Usuario '{request.user.username}' consultando sus trabajos")
+            logger.debug(f"🔒 Usuario '{request.user.usuario}' consultando sus trabajos")
         
         trabajos_list = []
         
@@ -253,9 +246,9 @@ def obtener_trabajos_pendientes(request):
             # Obtener información del usuario que creó el trabajo
             usuario_creador = "Sistema"
             if trabajo.usuario:
-                usuario_creador = trabajo.usuario.get_full_name()
+                usuario_creador = trabajo.usuario.get_nombre_completo()
                 if not usuario_creador or usuario_creador.strip() == "":
-                    usuario_creador = trabajo.usuario.username
+                    usuario_creador = trabajo.usuario.usuario
             
             trabajos_list.append({
                 'id': str(trabajo.id),
@@ -278,13 +271,13 @@ def obtener_trabajos_pendientes(request):
             logger.info(f"   Tipo: {trabajo.tipo}")
         
         if trabajos_list:
-            tipo_busqueda = "TODOS" if es_sistema else f"usuario {request.user.username}"
+            tipo_busqueda = "TODOS" if es_sistema else f"usuario {request.user.usuario}"
             logger.info(f"📋 Enviados {len(trabajos_list)} trabajo(s) [{tipo_busqueda}]")
         else:
             # 🔥 MARCAR VACÍO: Si no hay nada, guardar en Redis por 60s
             # Esto evitará que 1000 preguntas por segundo toquen la DB
-            cache.set(cache_key_vacio, True, 60)
-            logger.debug(f"📋 Sin trabajos pendientes para {request.user.username} (Marcado en caché)")
+            # cache.set(cache_key_vacio, True, 60)
+            logger.debug(f"📋 Sin trabajos pendientes para {request.user.usuario} (Marcado en caché)")
         
         return Response({
             'trabajos': trabajos_list,
@@ -329,14 +322,14 @@ def reportar_resultado(request):
         
         logger.info(f"📊 Resultado trabajo {trabajo_id}: {'✅ ÉXITO' if success else '❌ ERROR'}")
         logger.info(f"   Mensaje: {mensaje}")
-        logger.info(f"   Usuario agente: {request.user.username}")
+        logger.info(f"   Usuario agente: {request.user.usuario}")
         
         try:
             trabajo = TrabajoImpresion.objects.get(id=trabajo_id)
             
             # 🔥 NUEVO: Loguear usuario creador
             if trabajo.usuario:
-                logger.info(f"   Creado por: {trabajo.usuario.username}")
+                logger.info(f"   Creado por: {trabajo.usuario.usuario}")
             
             if success:
                 # Marcar como completado
@@ -351,7 +344,7 @@ def reportar_resultado(request):
                 'success': True,
                 'mensaje': 'Resultado registrado correctamente',
                 'trabajo_id': str(trabajo.id),
-                'usuario_creador': trabajo.usuario.username if trabajo.usuario else None
+                'usuario_creador': trabajo.usuario.usuario if trabajo.usuario else None
             }, status=status.HTTP_200_OK)
             
         except TrabajoImpresion.DoesNotExist:
@@ -491,22 +484,12 @@ def obtener_estado_agente(request):
 # FUNCIONES AUXILIARES PARA CREAR TRABAJOS (COMPATIBILIDAD)
 # ============================================================================
 
-def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticket', prioridad=1, abrir_gaveta=None):
+def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticket', prioridad=1, abrir_gaveta=None, venta=None):
     """
     Crea un trabajo de impresión en la BD para que el agente lo procese
-    
-    Args:
-        usuario: Instancia del modelo de Usuario
-        impresora_nombre: Nombre del driver de la impresora
-        comandos_hex: Comandos ESC/POS en formato hexadecimal
-        tipo: Tipo de documento (ticket, factura, test, etc)
-        prioridad: 1=Alta, 2=Media, 3=Baja
-        abrir_gaveta: True/False o None (None = detectar automáticamente)
-    
-    Returns:
-        str: ID del trabajo creado
     """
     try:
+        logger.info(f"🏗️ Iniciando crear_trabajo_impresion para {impresora_nombre} (tipo={tipo})")
         # 1. Intentar buscar por ID (UUID) si el nombre parece un UUID
         import uuid
         impresora = None
@@ -532,8 +515,6 @@ def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticke
         
         # Si aún no se encuentra, usar la predeterminada
         if not impresora:
-            # 🔥 ROBUSTEZ: Si no existe, crear una temporal o asignar a "Desconocida"
-            # En lugar de fallar, creamos una para que el trabajo sea VISIBLE en el panel
             impresora, created = Impresora.objects.get_or_create(
                 nombre=impresora_nombre[:100],
                 defaults={
@@ -544,8 +525,6 @@ def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticke
                     'codigo': f"TEMP-{uuid.uuid4().hex[:6].upper()}"
                 }
             )
-            if created:
-                logger.info(f"🆕 Impresora temporal creada: {impresora_nombre}")
         
         # Validar comandos
         if not comandos_hex or len(comandos_hex) < 10:
@@ -572,6 +551,7 @@ def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticke
             datos_impresion=comandos_hex,
             formato='ESC_POS',
             usuario=usuario,
+            venta=venta,
             copias=1,
             abrir_gaveta=abrir_gaveta,
             max_intentos=3
@@ -582,10 +562,15 @@ def crear_trabajo_impresion(usuario, impresora_nombre, comandos_hex, tipo='ticke
         cache.delete(cache_key_vacio)
         
         # También invalidar para el usuario de sistema que escucha todo
-        cache.delete("print_queue_empty_agente_impresion") # Por si acaso se usa alias
+        try:
+            agente_user = Usuario.objects.filter(usuario='agente_impresion').first()
+            if agente_user:
+                cache.delete(f"print_queue_empty_{agente_user.id}")
+        except:
+            pass
         
         logger.info(f"📄 Trabajo de impresión creado: {trabajo.id}")
-        logger.info(f"   Usuario: {usuario.username} (ID:{usuario.id})")
+        logger.info(f"   Usuario: {usuario.usuario} (ID:{usuario.id})")
         logger.info(f"   Impresora: {impresora.nombre} (Driver: {impresora.nombre_driver})")
         logger.info(f"   Tipo: {tipo}")
         logger.info(f"   Prioridad: {prioridad}")
@@ -614,7 +599,7 @@ def cancelar_trabajo_impresion(usuario, trabajo_id):
             return False
         
         trabajo.cancelar()
-        logger.info(f"🚫 Trabajo {trabajo_id} cancelado por {usuario.username}")
+        logger.info(f"🚫 Trabajo {trabajo_id} cancelado por {usuario.usuario}")
         return True
         
     except TrabajoImpresion.DoesNotExist:
@@ -1011,7 +996,7 @@ def obtener_trabajos_sin_auth(request):
             
             usuario_creador = "Sistema"
             if trabajo.usuario:
-                usuario_creador = trabajo.usuario.get_full_name() or trabajo.usuario.username
+                usuario_creador = trabajo.usuario.get_nombre_completo() or trabajo.usuario.usuario
 
             trabajos_list.append({
                 'id': str(trabajo.id),

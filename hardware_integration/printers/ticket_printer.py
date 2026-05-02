@@ -5,7 +5,12 @@ from django.utils import timezone as tz
 
 logger = logging.getLogger(__name__)
 
-ANCHO = 48  # igual que printer_service.py que funciona bien
+def get_ancho_caracteres(impresora_obj):
+    """Retorna el ancho en caracteres según el papel (mm)"""
+    ancho_mm = getattr(impresora_obj, "ancho_papel", 80)
+    if ancho_mm < 60:  # 58mm
+        return 32
+    return 48  # 80mm
 
 
 def get_sucursal():
@@ -37,7 +42,7 @@ def get_config():
     return Config(get_sucursal())
 
 
-def centrar(texto, ancho=ANCHO):
+def centrar(texto, ancho):
     texto = str(texto)[:ancho]
     pad = (ancho - len(texto)) // 2
     return (" " * pad + texto + "\n").encode("utf-8")
@@ -47,7 +52,7 @@ def izquierda(texto):
     return (str(texto) + "\n").encode("utf-8")
 
 
-def fila(izq, der, ancho=ANCHO):
+def fila(izq, der, ancho):
     izq = str(izq)
     der = str(der)
     espacio = ancho - len(izq) - len(der)
@@ -55,7 +60,7 @@ def fila(izq, der, ancho=ANCHO):
     return (izq + " " * espacio + der + "\n").encode("utf-8")
 
 
-def sep(char="=", ancho=ANCHO):
+def sep(char, ancho):
     return (char * ancho + "\n").encode("utf-8")
 
 
@@ -79,17 +84,18 @@ class TicketPrinter:
             cfg = get_config()
             S = cfg.S
             D = cfg.D
+            ancho = get_ancho_caracteres(impresora_obj)
             c = b""
 
             # ENCABEZADO
             c += CENTER
             c += BOLD_ON
-            c += centrar(cfg.nombre)
+            c += centrar(cfg.nombre, ancho)
             c += BOLD_OFF
-            if cfg.ruc:    c += centrar("RUC: " + cfg.ruc)
-            if cfg.ciudad: c += centrar(cfg.ciudad)
-            if cfg.tel:    c += centrar("TEL: " + cfg.tel)
-            c += sep("=")
+            if cfg.ruc:    c += centrar("RUC: " + cfg.ruc, ancho)
+            if cfg.ciudad: c += centrar(cfg.ciudad, ancho)
+            if cfg.tel:    c += centrar("TEL: " + cfg.tel, ancho)
+            c += sep("=", ancho)
 
             # DATOS VENTA
             c += LEFT
@@ -99,21 +105,21 @@ class TicketPrinter:
             cajero = venta.usuario.usuario if venta.usuario else "Sistema"
             c += izquierda("CAJERO: " + cajero)
             if venta.cliente:
-                c += izquierda("CLIENT: " + venta.cliente.get_nombre_completo()[:40])
+                c += izquierda("CLIENT: " + venta.cliente.get_nombre_completo()[:ancho-8])
                 c += izquierda("CI/RUC: " + str(venta.cliente.identificacion))
 
             # ORDEN DE TALLER
             if venta.orden_trabajo:
                 ot = venta.orden_trabajo
-                c += sep("-")
+                c += sep("-", ancho)
                 c += CENTER
                 c += BOLD_ON
-                c += centrar("ORDEN DE TALLER")
+                c += centrar("ORDEN DE TALLER", ancho)
                 c += BOLD_OFF
                 c += LEFT
                 c += izquierda("OT    : " + str(ot.numero_orden))
                 moto = ((ot.moto_marca or "") + " " + (ot.moto_modelo or "")).strip()
-                if moto: c += izquierda("MOTO  : " + moto[:40])
+                if moto: c += izquierda("MOTO  : " + moto[:ancho-8])
                 if ot.moto_placa: c += izquierda("PLACA : " + ot.moto_placa)
                 if ot.moto_año: c += izquierda("ANO   : " + str(ot.moto_año))
                 if ot.kilometraje_entrada: c += izquierda("KM    : " + str(ot.kilometraje_entrada))
@@ -121,14 +127,14 @@ class TicketPrinter:
                     t = ot.tecnico_principal
                     c += izquierda("TEC   : " + t.nombres + " " + t.apellidos)
                 if ot.trabajo_realizado:
-                    c += izquierda("TRAB  : " + ot.trabajo_realizado[:40])
+                    c += izquierda("TRAB  : " + ot.trabajo_realizado[:ancho-8])
 
             # ITEMS
-            c += sep("=")
+            c += sep("=", ancho)
             c += BOLD_ON
-            c += fila("DESCRIPCION", "TOTAL")
+            c += fila("DESCRIPCION", "TOTAL", ancho)
             c += BOLD_OFF
-            c += sep("-")
+            c += sep("-", ancho)
 
             for det in venta.detalleventa_set.select_related("producto", "tipo_servicio", "tecnico").all():
                 if det.nombre_personalizado:  nombre = det.nombre_personalizado
@@ -140,37 +146,38 @@ class TicketPrinter:
                 cant_str  = "{:.0f} x ".format(det.cantidad) + S + "{:.{}f}".format(det.precio_unitario, D)
 
                 # nombre + total en misma linea
-                c += fila(nombre[:38], total_str)
-                if len(nombre) > 38:
-                    c += izquierda("  " + nombre[38:])
+                max_desc = ancho - len(total_str) - 2
+                c += fila(nombre[:max_desc], total_str, ancho)
+                if len(nombre) > max_desc:
+                    c += izquierda("  " + nombre[max_desc:max_desc+ancho-2])
                 c += izquierda("  " + cant_str)
                 if det.tecnico:
                     tec = det.tecnico.nombres + " " + det.tecnico.apellidos
-                    c += izquierda("  TECNICO: " + tec[:36])
+                    c += izquierda("  TECNICO: " + tec[:ancho-12])
 
             # TOTALES
-            c += sep("=")
-            c += fila("SUBTOTAL", S + "{:.{}f}".format(venta.subtotal, D))
+            c += sep("=", ancho)
+            c += fila("SUBTOTAL", S + "{:.{}f}".format(venta.subtotal, D), ancho)
             if venta.descuento and venta.descuento > 0:
-                c += fila("DESCUENTO", "-" + S + "{:.{}f}".format(venta.descuento, D))
+                c += fila("DESCUENTO", "-" + S + "{:.{}f}".format(venta.descuento, D), ancho)
             if venta.iva and venta.iva > 0:
-                c += fila("IVA {:.0f}%".format(cfg.iva), S + "{:.{}f}".format(venta.iva, D))
+                c += fila("IVA {:.0f}%".format(cfg.iva), S + "{:.{}f}".format(venta.iva, D), ancho)
 
             pagos = {"EFECTIVO":"EFECTIVO","TARJETA":"TARJETA","TRANSFERENCIA":"TRANSFERENCIA","CREDITO":"CREDITO","MIXTO":"MIXTO"}
             if venta.tipo_pago:
                 c += izquierda("(" + pagos.get(venta.tipo_pago, venta.tipo_pago) + ")")
 
-            c += sep("-")
+            c += sep("-", ancho)
             c += BOLD_ON
-            c += fila("TOTAL A PAGAR", S + "{:.{}f}".format(venta.total, D))
+            c += fila("TOTAL A PAGAR", S + "{:.{}f}".format(venta.total, D), ancho)
             c += BOLD_OFF
-            c += sep("=")
+            c += sep("=", ancho)
 
             # PIE
             c += CENTER
             c += b"\n"
-            c += centrar("GRACIAS POR SU PREFERENCIA")
-            c += centrar("Vuelva pronto!")
+            c += centrar("GRACIAS POR SU PREFERENCIA", ancho)
+            c += centrar("Vuelva pronto!", ancho)
             c += FEED
             c += CUT
 
@@ -207,15 +214,16 @@ class TicketPrinter:
     def imprimir_ticket_prueba(impresora_obj):
         try:
             cfg = get_config()
+            ancho = get_ancho_caracteres(impresora_obj)
             c = b""
             c += CENTER
             c += BOLD_ON
-            c += centrar("TICKET DE PRUEBA")
+            c += centrar("TICKET DE PRUEBA", ancho)
             c += BOLD_OFF
-            c += centrar(cfg.nombre)
-            if cfg.ruc: c += centrar("RUC: " + cfg.ruc)
-            c += sep("=")
-            c += centrar("Impresora funcionando OK")
+            c += centrar(cfg.nombre, ancho)
+            if cfg.ruc: c += centrar("RUC: " + cfg.ruc, ancho)
+            c += sep("=", ancho)
+            c += centrar("Impresora funcionando OK", ancho)
             c += FEED
             c += CUT
 

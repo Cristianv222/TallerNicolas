@@ -30,9 +30,10 @@
                         <span class="input-group-text bg-transparent border-0"><i class="fas fa-tag text-primary"></i></span>
                         <select name="tipo" class="form-select border-0 bg-transparent">
                             <option value="">Todos los tipos</option>
-                            <option value="TICKET" {% if request.GET.tipo == 'TICKET' %}selected{% endif %}>Ticket (Térmica)</option>
-                            <option value="ETIQUETA" {% if request.GET.tipo == 'ETIQUETAS' %}selected{% endif %}>Etiqueta (Zebra/TSC)</option>
-                            <option value="LOCAL" {% if request.GET.tipo == 'LOCAL' %}selected{% endif %}>Local (Sistema)</option>
+                             <option value="TERMICA_80MM" {% if request.GET.tipo == 'TERMICA_80MM' %}selected{% endif %}>Térmica 80mm</option>
+                            <option value="TERMICA_58MM" {% if request.GET.tipo == 'TERMICA_58MM' %}selected{% endif %}>Térmica 58mm</option>
+                            <option value="ETIQUETAS" {% if request.GET.tipo == 'ETIQUETAS' %}selected{% endif %}>Etiquetas</option>
+                            <option value="LASER" {% if request.GET.tipo == 'LASER' %}selected{% endif %}>Láser (A4)</option>
                         </select>
                     </div>
                 </div>
@@ -65,7 +66,7 @@
     <!-- Lista de Impresoras con Cards Premium -->
     <div class="row g-4">
         {% for impresora in impresoras %}
-        <div class="col-xl-4 col-md-6 animate__animated animate__fadeInUp" style="animation-delay: {% widthratio forloop.counter0 1 100 %}ms">
+        <div class="col-xl-4 col-md-6 animate__animated animate__fadeInUp printer-card" data-id="{{ impresora.id }}" style="animation-delay: {% widthratio forloop.counter0 1 100 %}ms">
             <div class="card h-100 border-0 shadow-sm glass-card pointer-event transition-all">
                 <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-start">
                     <div class="status-indicator">
@@ -96,7 +97,7 @@
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center mb-4">
                         <div class="printer-avatar me-3">
-                            {% if impresora.tipo_impresora == 'TICKET' %}
+                            {% if impresora.tipo_impresora == 'TICKET' or impresora.tipo_impresora == 'TERMICA_80MM' or impresora.tipo_impresora == 'TERMICA_58MM' %}
                                 <div class="icon-circle bg-primary bg-opacity-10 text-primary">
                                     <i class="fas fa-receipt"></i>
                                 </div>
@@ -145,7 +146,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="counter-badge">
                             <span class="small text-muted mb-0">
-                                <i class="fas fa-file-invoice me-1"></i> <strong>{{ impresora.contador_impresiones }}</strong> trabajos
+                                <i class="fas fa-file-invoice me-1"></i> <strong class="contador-val">{{ impresora.contador_impresiones }}</strong> trabajos
                             </span>
                         </div>
                         <a href="{% url 'hardware_integration:impresora_update' impresora.pk %}" class="btn btn-sm btn-outline-primary px-3 rounded-pill fw-bold">
@@ -328,5 +329,41 @@
     .bg-soft-primary { background-color: rgba(78, 115, 223, 0.1); }
 
     .tracking-wider { letter-spacing: 0.05em !important; }
-</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function actualizarEstados() {
+        fetch("{% url 'hardware_integration:api_estado_impresoras' %}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.impresoras) {
+                    data.impresoras.forEach(imp => {
+                        const card = document.querySelector(`.printer-card[data-id="${imp.id}"]`);
+                        if (card) {
+                            const indicator = card.querySelector('.status-indicator');
+                            if (indicator) {
+                                let html = '';
+                                if (imp.estado === 'ACTIVA') {
+                                    html = '<span class="badge-pulse bg-success"></span><span class="badge bg-soft-success text-success px-3">En Línea</span>';
+                                } else if (imp.estado === 'ERROR') {
+                                    html = '<span class="badge-pulse bg-danger"></span><span class="badge bg-soft-danger text-danger px-3">Desconectada</span>';
+                                } else {
+                                    html = '<span class="badge bg-soft-secondary text-secondary px-3">Inactiva</span>';
+                                }
+                                indicator.innerHTML = html;
+                            }
+                            const contador = card.querySelector('.contador-val');
+                            if (contador) {
+                                contador.innerText = imp.contador;
+                            }
+                        }
+                    });
+                }
+            });
+    }
+
+    setInterval(actualizarEstados, 10000);
+    actualizarEstados();
+</script>
 {% endblock %}

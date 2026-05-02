@@ -65,6 +65,24 @@
                                 {{ form.tipo_impresora }}
                                 {% if form.tipo_impresora.errors %}<div class="text-danger x-small mt-1">{{ form.tipo_impresora.errors.0 }}</div>{% endif %}
                             </div>
+                            <div class="col-md-6" id="seccion-ancho-papel">
+                                <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Ancho del Papel (mm)</label>
+                                <div class="form-icon-input">
+                                    <i class="fas fa-ruler-horizontal"></i>
+                                    {{ form.ancho_papel }}
+                                </div>
+                                <div class="form-text x-small">80mm estándar o 58mm mini</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Densidad</label>
+                                {{ form.densidad_impresion }}
+                                <div class="form-text x-small">Oscuridad (1-5)</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Velocidad</label>
+                                {{ form.velocidad_impresion }}
+                                <div class="form-text x-small">mm/s (50-300)</div>
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Marca</label>
                                 {{ form.marca }}
@@ -89,11 +107,15 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Interfaz de Conexión <span class="text-danger">*</span></label>
                                 {{ form.tipo_conexion }}
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Protocolo <span class="text-danger">*</span></label>
+                                {{ form.protocolo }}
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small text-uppercase tracking-wider">Estado Operativo</label>
                                 {{ form.estado }}
                             </div>
@@ -340,7 +362,8 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const tipoConexion = document.getElementById('id_tipo_conexion');
+        const tipoImpresora = document.getElementById('id_tipo_impresora');
+        const anchoPapel = document.getElementById('id_ancho_papel');
 
         function toggleSecciones() {
             const val = tipoConexion ? tipoConexion.value : '';
@@ -351,19 +374,39 @@
             
             // Nueva sección de etiquetas
             const seccionEtiquetas = document.getElementById('seccion-etiquetas-premium');
-            const tipoImpresora = document.getElementById('id_tipo_impresora');
             if (seccionEtiquetas && tipoImpresora) {
                 seccionEtiquetas.style.display = (tipoImpresora.value === 'ETIQUETAS') ? '' : 'none';
+                
+                // Mostrar/ocultar ancho de papel según el tipo
+                const seccionAncho = document.getElementById('seccion-ancho-papel');
+                if (seccionAncho) {
+                    seccionAncho.style.display = (tipoImpresora.value === 'ETIQUETAS') ? 'none' : '';
+                }
             }
+        }
+
+        function handleTipoImpresoraChange() {
+            const val = tipoImpresora.value;
+            if (val.includes('_58')) {
+                if (anchoPapel && (anchoPapel.value === '80' || anchoPapel.value === '')) {
+                    anchoPapel.value = '58';
+                    anchoPapel.classList.add('is-valid');
+                    setTimeout(() => anchoPapel.classList.remove('is-valid'), 2000);
+                }
+            } else if (val.includes('TERMICA') && !val.includes('_58')) {
+                if (anchoPapel && anchoPapel.value === '58') {
+                    anchoPapel.value = '80';
+                }
+            }
+            toggleSecciones();
         }
 
         if (tipoConexion) {
             tipoConexion.addEventListener('change', toggleSecciones);
         }
         
-        const tipoImpresora = document.getElementById('id_tipo_impresora');
         if (tipoImpresora) {
-            tipoImpresora.addEventListener('change', toggleSecciones);
+            tipoImpresora.addEventListener('change', handleTipoImpresoraChange);
         }
         
         toggleSecciones();

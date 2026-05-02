@@ -27,6 +27,10 @@ from .printers.cash_drawer_service import CashDrawerService
 
 # Importar mixins requeridos
 from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import get_user_model
+
+Usuario = get_user_model()
 
 
 # ============================================================================
@@ -180,6 +184,16 @@ class ImpresoraDetailView(LoginRequiredMixin, DetailView):
         # Gavetas conectadas
         context['gavetas'] = impresora.gavetas.filter(activa=True)
         
+        # Gestión de Token de Agente (Usuario del sistema)
+        # El agente local usa un único usuario de sistema para todas las impresoras
+        # por lo que el token es global para el servicio.
+        try:
+            agente_user = Usuario.objects.get(usuario='agente_impresion')
+            token, created = Token.objects.get_or_create(user=agente_user)
+            context['agent_token'] = token.key
+        except Usuario.DoesNotExist:
+            context['agent_token'] = None
+            
         return context
 
 
@@ -242,6 +256,34 @@ class TestConexionView(LoginRequiredMixin, View):
             impresora.save(update_fields=['estado'])
             messages.error(request, f"Error de conexión: {mensaje}")
         
+        return redirect('hardware_integration:impresora_detail', pk=pk)
+
+
+class ImpresoraGenerateTokenView(LoginRequiredMixin, View):
+    """Generar o refrescar token para el agente de impresión"""
+    
+    def post(self, request, pk):
+        # Aseguramos que exista el usuario de sistema
+        agente_user, created = Usuario.objects.get_or_create(
+            usuario='agente_impresion',
+            defaults={
+                'nombre': 'Agente',
+                'apellido': 'Impresión',
+                'email': 'agente@fullmotosnicolas.com',
+                'is_active': True,
+                'is_staff': False
+            }
+        )
+        
+        if created:
+            agente_user.set_unusable_password()
+            agente_user.save()
+            
+        # Generar o regenerar token
+        Token.objects.filter(user=agente_user).delete()
+        token = Token.objects.create(user=agente_user)
+        
+        messages.success(request, "Token de agente generado exitosamente. Cópielo y úselo en la configuración del servicio local.")
         return redirect('hardware_integration:impresora_detail', pk=pk)
 
 

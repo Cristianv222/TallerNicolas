@@ -3011,7 +3011,7 @@
         let printerData = null;
         if (selectedPrintType !== 'none' && printerSelect && printerSelect.value) {
             const printerName = printerSelect.value;
-            const printerObj = availablePrinters.find(p => p.nombre === printerName || p.name === printerName);
+            const printerObj = availablePrinters.find(p => (p.id || p.name) === printerName);
             printerData = {
                 name: printerName,
                 type: printerObj ? (printerObj.type || printerObj.tipo || 'GENERIC_80MM') : 'GENERIC_80MM'
@@ -3052,7 +3052,7 @@
                 const itemTotal = itemSubtotalGross + itemIva - itemDiscount;
 
                 return {
-                    type: item.type === 'product' ? 'product' : 'service',
+                    type: item.type,
                     id: item.id,
                     name: item.name,
                     quantity: item.quantity,
@@ -3105,9 +3105,7 @@
 
                     showToast('✅ Venta procesada exitosamente', 'success');
 
-                    if (selectedPrintType === 'ticket') {
-                        printThermalTicket(data.venta_id);
-                    } else if (selectedPrintType === 'pdf') {
+                    if (selectedPrintType === 'pdf') {
                         printInvoicePDF(data.venta_id);
                     } else {
                         showToast(`Venta completada. Factura #${data.numero_factura || data.venta_id}`, 'success');

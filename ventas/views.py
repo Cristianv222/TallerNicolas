@@ -1522,6 +1522,7 @@ def api_procesar_venta_pos_mejorado(request):
                 }
                 
             except Exception as e:
+                logger.error(f"❌ Error en el flujo de impresión POS: {str(e)}", exc_info=True)
                 print_result = {
                     'success': False,
                     'message': f'Error al imprimir ticket: {str(e)}',

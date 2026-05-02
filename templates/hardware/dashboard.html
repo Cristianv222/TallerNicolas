@@ -154,19 +154,27 @@
                             </thead>
                             <tbody>
                                 {% for impresora in total_impresoras_list|slice:":5" %}
-                                <tr>
+                                <tr data-id="{{ impresora.id }}">
                                     <td>
                                         <div class="fw-bold">{{ impresora.nombre }}</div>
                                         <small class="text-muted">{{ impresora.marca|default:"" }} {{ impresora.modelo|default:"" }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge bg-light text-dark">{{ impresora.get_tipo_impresora_display }}</span>
+                                        <span class="badge bg-light text-dark">
+                                            {% if impresora.tipo_impresora == 'TERMICA_80MM' %}
+                                                <i class="fas fa-receipt text-primary me-1"></i> 80mm
+                                            {% elif impresora.tipo_impresora == 'TERMICA_58MM' %}
+                                                <i class="fas fa-receipt text-success me-1"></i> 58mm
+                                            {% else %}
+                                                {{ impresora.get_tipo_impresora_display }}
+                                            {% endif %}
+                                        </span>
                                     </td>
                                     <td>
                                         <small class="d-block">{{ impresora.get_tipo_conexion_display }}</small>
                                         <code class="text-xs">{{ impresora.identificador_conexion|truncatechars:15 }}</code>
                                     </td>
-                                    <td>
+                                    <td class="status-badge">
                                         {% if impresora.estado == 'ACTIVA' %}
                                             <span class="badge bg-success">En línea</span>
                                         {% elif impresora.estado == 'ERROR' %}
@@ -175,7 +183,7 @@
                                             <span class="badge bg-warning">Desconectada</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ impresora.contador_impresiones }}</td>
+                                    <td class="contador-val">{{ impresora.contador_impresiones }}</td>
                                     <td>
                                         <a href="{% url 'hardware_integration:impresora_update' impresora.pk %}" class="btn btn-sm btn-light">
                                             <i class="fas fa-edit"></i>
@@ -330,5 +338,40 @@
             })
             .catch(err => alert('Error de conexión'));
     }
+
+    // Polling de estado de impresoras
+    function actualizarEstados() {
+        fetch("{% url 'hardware_integration:api_estado_impresoras' %}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.impresoras) {
+                    data.impresoras.forEach(imp => {
+                        const row = document.querySelector(`tr[data-id="${imp.id}"]`);
+                        if (row) {
+                            const badge = row.querySelector('.status-badge');
+                            if (badge) {
+                                let html = '';
+                                if (imp.estado === 'ACTIVA') {
+                                    html = '<span class="badge bg-success">En línea</span>';
+                                } else if (imp.estado === 'ERROR') {
+                                    html = '<span class="badge bg-danger">Error</span>';
+                                } else {
+                                    html = '<span class="badge bg-warning">Desconectada</span>';
+                                }
+                                badge.innerHTML = html;
+                            }
+                            const contador = row.querySelector('.contador-val');
+                            if (contador) {
+                                contador.innerText = imp.contador;
+                            }
+                        }
+                    });
+                }
+            });
+    }
+
+    // Ejecutar cada 10 segundos
+    setInterval(actualizarEstados, 10000);
+    actualizarEstados();
 </script>
 {% endblock %}

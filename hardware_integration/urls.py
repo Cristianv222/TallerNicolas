@@ -22,6 +22,7 @@ urlpatterns = [
     path('impresoras/<uuid:pk>/test-pagina/', views.TestPaginaPruebaView.as_view(), name='impresora_test_pagina'),
     path('impresoras/<uuid:pk>/test/', views.TestPaginaPruebaView.as_view(), name='impresora_test'),
     path('impresoras/<uuid:pk>/mantenimiento/', views.MantenimientoImpresoraView.as_view(), name='impresora_mantenimiento'),
+    path('impresoras/<uuid:pk>/generate-token/', views.ImpresoraGenerateTokenView.as_view(), name='impresora_generate_token'),
     
     # Plantillas de Impresión
     path('plantillas/', views.PlantillaListView.as_view(), name='plantilla_list'),
