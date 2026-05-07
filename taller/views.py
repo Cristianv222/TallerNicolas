@@ -24,13 +24,15 @@ from django.views.decorators.http import require_POST
 from .models import (
     Tecnico, EspecialidadTecnica, CategoriaServicio, TipoServicio,
     OrdenTrabajo, ServicioOrden, RepuestoOrden,
-    SeguimientoOrden, EvaluacionServicio
+    SeguimientoOrden, EvaluacionServicio,
+    Cotizacion, CotizacionItem
 )
 from .service.cotizacion_service import CotizacionService
 from .forms import (
     TecnicoForm, TipoServicioForm, OrdenTrabajoForm, ServicioOrdenForm,
     RepuestoOrdenForm, EvaluacionServicioForm,
-    BusquedaOrdenForm, ServicioOrdenFormSet, RepuestoOrdenFormSet
+    BusquedaOrdenForm, ServicioOrdenFormSet, RepuestoOrdenFormSet,
+    CotizacionForm, CotizacionItemFormSet
 )
 from clientes.models import Cliente, Moto
 from inventario.models import Producto
@@ -1506,7 +1508,7 @@ def buscar_cliente_ajax(request):
     """
     query = request.GET.get('q', '').strip()
     
-    if len(query) < 3:
+    if len(query) < 2:
         return JsonResponse([], safe=False)
     
     # Buscar clientes por identificación, nombres o apellidos
@@ -1535,19 +1537,44 @@ def buscar_cliente_ajax(request):
 @login_required
 def obtener_precio_servicio_ajax(request, pk):
     """
-    Vista AJAX para obtener los precios de un servicio
+    Vista AJAX para obtener el precio de un servicio
     """
     try:
         servicio = TipoServicio.objects.get(pk=pk)
         data = {
-            'precio_base': float(servicio.precio_base),
-            'precio_mano_obra': float(servicio.precio_mano_obra),
-            'tiempo_estimado': float(servicio.tiempo_estimado_horas),
-            'incluye_iva': servicio.incluye_iva
+            'id': servicio.id,
+            'nombre': servicio.nombre,
+            'precio': float(servicio.precio),
+            'tiempo_estimado': float(servicio.tiempo_estimado_horas or 0),
         }
         return JsonResponse(data)
     except TipoServicio.DoesNotExist:
         return JsonResponse({'error': 'Servicio no encontrado'}, status=404)
+
+@login_required
+def ajax_precio_servicio(request):
+    """Vista genérica para obtener precio de servicio por ID en query params"""
+    pk = request.GET.get('id')
+    if not pk:
+        return JsonResponse({'error': 'ID no proporcionado'}, status=400)
+    return obtener_precio_servicio_ajax(request, pk)
+
+@login_required
+def ajax_precio_producto(request):
+    """Vista para obtener precio de producto por ID"""
+    pk = request.GET.get('id')
+    if not pk:
+        return JsonResponse({'error': 'ID no proporcionado'}, status=400)
+    try:
+        producto = Producto.objects.get(pk=pk)
+        return JsonResponse({
+            'id': producto.id,
+            'nombre': producto.nombre,
+            'precio': float(producto.precio_venta),
+            'stock': float(producto.stock_actual)
+        })
+    except Producto.DoesNotExist:
+        return JsonResponse({'error': 'Producto no encontrado'}, status=404)
 
 # Vista AJAX para buscar productos
 @login_required
@@ -1557,29 +1584,60 @@ def buscar_producto_ajax(request):
     """
     query = request.GET.get('q', '').strip()
     
-    if len(query) < 2:
-        return JsonResponse([], safe=False)
-    
-    # Buscar productos por código, nombre o descripción
-    productos = Producto.objects.filter(
-        Q(codigo__icontains=query) |
-        Q(nombre__icontains=query) |
-        Q(descripcion__icontains=query)
-    ).filter(
-        activo=True,
-        stock_actual__gt=0  # Solo productos con stock
-    )[:10]
+    # Si no hay búsqueda, mostrar los más recientes o primeros 20
+    if not query:
+        productos = Producto.objects.filter(activo=True).order_by('-fecha_creacion')[:20]
+    else:
+        # Buscar productos por código, nombre o descripción
+        # NOTA: No buscamos en 'codigo_barras' porque es un ImageField
+        productos = Producto.objects.filter(
+            Q(codigo_unico__icontains=query) |
+            Q(nombre__icontains=query) |
+            Q(descripcion__icontains=query)
+        ).filter(
+            activo=True
+        ).order_by('nombre')[:50]
     
     data = []
     for producto in productos:
         data.append({
             'id': producto.id,
-            'codigo': producto.codigo,
+            'codigo': producto.codigo_unico or '',
             'nombre': producto.nombre,
             'descripcion': producto.descripcion or '',
-            'precio_venta': float(producto.precio_venta),
-            'stock_actual': producto.stock_actual,
-            'text': f"{producto.codigo} - {producto.nombre} (Stock: {producto.stock_actual})"
+            'precio': float(producto.precio_venta),
+            'stock': float(producto.stock_actual)
+        })
+    
+    return JsonResponse(data, safe=False)
+
+@login_required
+def ajax_servicios_disponibles(request):
+    """
+    Vista AJAX para obtener servicios disponibles para cotizaciones
+    """
+    query = request.GET.get('busqueda', '').strip()
+    
+    servicios = TipoServicio.objects.filter(activo=True)
+    if query:
+        servicios = servicios.filter(
+            Q(nombre__icontains=query) |
+            Q(codigo__icontains=query)
+        )
+    else:
+        # Por defecto mostrar los primeros 20
+        servicios = servicios.order_by('nombre')
+    
+    servicios = servicios.select_related('categoria')[:20]
+    
+    data = []
+    for svc in servicios:
+        data.append({
+            'id': svc.id,
+            'codigo': svc.codigo,
+            'nombre': svc.nombre,
+            'precio': float(svc.precio),
+            'categoria': svc.categoria.nombre if svc.categoria else 'General'
         })
     
     return JsonResponse(data, safe=False)
@@ -1890,3 +1948,163 @@ def crear_categoria_ajax(request):
             'success': False,
             'message': f'Error interno del servidor: {str(e)}'
         })
+
+
+# ================== VISTAS DE COTIZACIÓN (INDEPENDIENTE) ==================
+
+class CotizacionListView(LoginRequiredMixin, ListView):
+    """Historial de Cotizaciones"""
+    model = Cotizacion
+    template_name = 'taller/cotizacion_list.html'
+    context_object_name = 'cotizaciones'
+    paginate_by = 20
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_page'] = 'taller'
+        context['active_sub'] = 'cotizaciones'
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(numero_cotizacion__icontains=search_query) |
+                Q(nombre_cliente_manual__icontains=search_query) |
+                Q(cliente__nombres__icontains=search_query) |
+                Q(cliente__apellidos__icontains=search_query) |
+                Q(moto_placa__icontains=search_query)
+            )
+        return queryset
+
+
+class CotizacionCreateView(LoginRequiredMixin, CreateView):
+    """Crear una nueva Cotización con items dinámicos"""
+    model = Cotizacion
+    form_class = CotizacionForm
+    template_name = 'taller/cotizacion_form.html'
+    success_url = reverse_lazy('taller:cotizacion_list')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['active_page'] = 'taller'
+        data['active_sub'] = 'cotizaciones'
+        if self.request.POST:
+            data['items'] = CotizacionItemFormSet(self.request.POST)
+        else:
+            data['items'] = CotizacionItemFormSet()
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        items = context['items']
+        with transaction.atomic():
+            form.instance.usuario_creacion = self.request.user
+            self.object = form.save()
+            if items.is_valid():
+                items.instance = self.object
+                items.save()
+                # Recalcular totales después de guardar items
+                self.object.actualizar_totales()
+        return super().form_valid(form)
+
+
+class CotizacionUpdateView(LoginRequiredMixin, UpdateView):
+    """Editar una Cotización existente"""
+    model = Cotizacion
+    form_class = CotizacionForm
+    template_name = 'taller/cotizacion_form.html'
+    success_url = reverse_lazy('taller:cotizacion_list')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['active_page'] = 'taller'
+        data['active_sub'] = 'cotizaciones'
+        if self.request.POST:
+            data['items'] = CotizacionItemFormSet(self.request.POST, instance=self.object)
+        else:
+            data['items'] = CotizacionItemFormSet(instance=self.object)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        items = context['items']
+        with transaction.atomic():
+            self.object = form.save()
+            if items.is_valid():
+                items.instance = self.object
+                items.save()
+                self.object.actualizar_totales()
+        return super().form_valid(form)
+
+
+class CotizacionDetailView(LoginRequiredMixin, DetailView):
+    """Ver detalles de una Cotización"""
+    model = Cotizacion
+    template_name = 'taller/cotizacion_detail.html'
+    context_object_name = 'cotizacion'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_page'] = 'taller'
+        context['active_sub'] = 'cotizaciones'
+        return context
+
+
+class CotizacionDeleteView(LoginRequiredMixin, DeleteView):
+    """Eliminar una Cotización"""
+    model = Cotizacion
+    template_name = 'taller/cotizacion_confirm_delete.html'
+    success_url = reverse_lazy('taller:cotizacion_list')
+
+
+@login_required
+def generar_cotizacion_pdf_standalone(request, pk):
+    """Generar PDF para la nueva cotización independiente"""
+    from .service.cotizacion_service import CotizacionService
+    import os
+    import base64
+    from django.conf import settings
+    from django.template.loader import render_to_string
+    
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    filename = f"cotizacion_{cotizacion.numero_cotizacion}.pdf"
+    
+    # Cargar logo
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'logo-FMN.png')
+    logo_base64 = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+            logo_base64 = f"data:image/png;base64,{encoded_string}"
+    
+    context = {
+        'cotizacion': cotizacion,
+        'items': cotizacion.items.all(),
+        'logo_base64': logo_base64,
+        'empresa': {
+            'nombre': 'FULL MOTOS NICOLAS',
+            'direccion': 'Cayambe Panamericana E35, Ecuador',
+            'telefono': '0961278095',
+            'email': 'admin@full-motos-nicolas.valktek.com'
+        }
+    }
+    
+    html_content = render_to_string('taller/cotizacion_pdf_standalone.html', context)
+    
+    try:
+        from weasyprint import HTML, CSS
+        css = CSS(string='@page { size: A4; margin: 1cm; }')
+        html_doc = HTML(string=html_content, base_url=request.build_absolute_uri('/'))
+        pdf = html_doc.write_pdf(stylesheets=[css])
+        
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    except Exception as e:
+        # Fallback a HTML si falla WeasyPrint
+        response = HttpResponse(html_content)
+        response['Content-Disposition'] = f'attachment; filename="{filename.replace(".pdf", ".html")}"'
+        return response
+

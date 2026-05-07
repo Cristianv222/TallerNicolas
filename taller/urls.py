@@ -55,6 +55,14 @@ urlpatterns = [
     path('reportes/tecnicos/', views.reporte_tecnicos, name='reporte_tecnicos'),
     path('reportes/servicios/', views.reporte_servicios, name='reporte_servicios'),
     
+    # Cotizaciones Independientes
+    path('cotizaciones/', views.CotizacionListView.as_view(), name='cotizacion_list'),
+    path('cotizaciones/crear/', views.CotizacionCreateView.as_view(), name='cotizacion_create'),
+    path('cotizaciones/<int:pk>/', views.CotizacionDetailView.as_view(), name='cotizacion_detail'),
+    path('cotizaciones/<int:pk>/editar/', views.CotizacionUpdateView.as_view(), name='cotizacion_update'),
+    path('cotizaciones/<int:pk>/eliminar/', views.CotizacionDeleteView.as_view(), name='cotizacion_delete'),
+    path('cotizaciones/<int:pk>/pdf/', views.generar_cotizacion_pdf_standalone, name='generar_cotizacion_pdf_standalone'),
+    
     # URLs AJAX
     path('ajax/motos-por-cliente/', views.ajax_motos_por_cliente, name='ajax_motos_por_cliente'),
     path('ajax/precio-servicio/', views.ajax_precio_servicio, name='ajax_precio_servicio'),

@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError
 from .models import (
     EspecialidadTecnica, CategoriaServicio, Tecnico, 
     TipoServicio, OrdenTrabajo, ServicioOrden, 
-    RepuestoOrden, CitaTaller, EvaluacionServicio
+    RepuestoOrden, CitaTaller, EvaluacionServicio,
+    Cotizacion, CotizacionItem
 )
 from clientes.models import Cliente
 from inventario.models import Producto
@@ -495,3 +496,60 @@ class BusquedaOrdenForm(forms.Form):
             'type': 'date'
         })
     )
+
+
+# ================== FORMS DE COTIZACIÓN (INDEPENDIENTE) ==================
+
+class CotizacionForm(forms.ModelForm):
+    """Formulario para el encabezado de la cotización"""
+    cliente_identificacion = forms.CharField(
+        label="Identificación Cliente",
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Ingrese cédula o RUC para buscar'
+        })
+    )
+    
+    class Meta:
+        model = Cotizacion
+        fields = [
+            'cliente', 'nombre_cliente_manual', 'moto_marca', 
+            'moto_modelo', 'moto_placa', 'validez_dias', 
+            'observaciones', 'estado'
+        ]
+        widgets = {
+            'cliente': forms.HiddenInput(),
+            'nombre_cliente_manual': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Escriba el nombre si no está registrado'
+            }),
+            'moto_marca': forms.TextInput(attrs={'class': 'form-control'}),
+            'moto_modelo': forms.TextInput(attrs={'class': 'form-control'}),
+            'moto_placa': forms.TextInput(attrs={'class': 'form-control'}),
+            'validez_dias': forms.NumberInput(attrs={'class': 'form-control'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'estado': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class CotizacionItemForm(forms.ModelForm):
+    """Formulario para un item de la cotización"""
+    class Meta:
+        model = CotizacionItem
+        fields = ['tipo', 'descripcion', 'cantidad', 'precio_unitario']
+        widgets = {
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'descripcion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción del item'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+
+# Inline formset para manejar items dinámicamente
+CotizacionItemFormSet = inlineformset_factory(
+    Cotizacion, 
+    CotizacionItem, 
+    form=CotizacionItemForm,
+    extra=1, 
+    can_delete=True
+)

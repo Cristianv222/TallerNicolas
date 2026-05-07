@@ -1019,3 +1019,154 @@ class EvaluacionServicio(models.Model):
             calificaciones.append(self.calificacion_precio)
         
         return sum(calificaciones) / len(calificaciones)
+
+
+# ================== MÓDULO DE COTIZACIONES (INDEPENDIENTE) ==================
+
+class Cotizacion(models.Model):
+    """Modelo independiente para cotizaciones rápidas y flexibles"""
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('ACEPTADA', 'Aceptada'),
+        ('RECHAZADA', 'Rechazada'),
+        ('EXPIRADA', 'Expirada'),
+    ]
+    
+    numero_cotizacion = models.CharField(max_length=20, unique=True, editable=False)
+    
+    # Cliente (puede ser registrado o manual)
+    cliente = models.ForeignKey(
+        'clientes.Cliente', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='cotizaciones'
+    )
+    nombre_cliente_manual = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True,
+        help_text="Usar si el cliente no está registrado"
+    )
+    
+    # Datos de la motocicleta (opcionales y flexibles)
+    moto_marca = models.CharField(max_length=100, blank=True, null=True)
+    moto_modelo = models.CharField(max_length=100, blank=True, null=True)
+    moto_placa = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Fechas y validez
+    fecha_emision = models.DateTimeField(auto_now_add=True)
+    validez_dias = models.PositiveIntegerField(
+        default=15, 
+        help_text="Días de validez de la cotización"
+    )
+    
+    # Totales
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Otros
+    estado = models.CharField(
+        max_length=20, 
+        choices=ESTADO_CHOICES, 
+        default='PENDIENTE'
+    )
+    observaciones = models.TextField(blank=True, null=True)
+    usuario_creacion = models.ForeignKey(
+        'usuarios.Usuario', 
+        on_delete=models.PROTECT,
+        related_name='cotizaciones_creadas'
+    )
+    
+    # Metadata
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _('Cotización')
+        verbose_name_plural = _('Cotizaciones')
+        ordering = ['-fecha_emision']
+    
+    def __str__(self):
+        nombre = self.cliente.get_nombre_completo() if self.cliente else self.nombre_cliente_manual
+        return f"{self.numero_cotizacion} - {nombre}"
+    
+    def save(self, *args, **kwargs):
+        if not self.numero_cotizacion:
+            self.numero_cotizacion = self._generar_numero_cotizacion()
+        super().save(*args, **kwargs)
+    
+    def _generar_numero_cotizacion(self):
+        """Generar número de cotización único (ej: COT-202405-0001)"""
+        ahora = timezone.now()
+        año_mes = ahora.strftime("%Y%m")
+        ultimo = Cotizacion.objects.filter(
+            numero_cotizacion__startswith=f"COT-{año_mes}"
+        ).order_by('-numero_cotizacion').first()
+        
+        if ultimo:
+            secuencia = int(ultimo.numero_cotizacion.split('-')[-1]) + 1
+        else:
+            secuencia = 1
+            
+        return f"COT-{año_mes}-{secuencia:04d}"
+    
+    def actualizar_totales(self):
+        """Recalcula los totales basados en los items"""
+        total_items = self.items.aggregate(
+            total=Sum('subtotal')
+        )['total'] or Decimal('0.00')
+        
+        self.subtotal = total_items
+        # El taller no suele cobrar IVA en servicios, pero por si acaso dejamos el cálculo
+        # self.iva = self.subtotal * Decimal('0.15') # Ejemplo 15%
+        self.total = self.subtotal + self.iva
+        self.save(update_fields=['subtotal', 'iva', 'total'])
+
+    def get_nombre_cliente(self):
+        if self.cliente:
+            return self.cliente.get_nombre_completo()
+        return self.nombre_cliente_manual or "Cliente General"
+
+    @property
+    def get_fecha_vencimiento(self):
+        return self.fecha_emision + timedelta(days=self.validez_dias)
+
+    @property
+    def esta_expirada(self):
+        vencimiento = self.fecha_emision + timedelta(days=self.validez_dias)
+        return timezone.now() > vencimiento and self.estado == 'PENDIENTE'
+
+
+class CotizacionItem(models.Model):
+    """Items individuales dentro de una cotización"""
+    TIPO_CHOICES = [
+        ('SERVICIO', 'Servicio'),
+        ('REPUESTO', 'Repuesto'),
+    ]
+    
+    cotizacion = models.ForeignKey(
+        Cotizacion, 
+        on_delete=models.CASCADE, 
+        related_name='items'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='SERVICIO')
+    descripcion = models.CharField(max_length=255)
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    
+    def save(self, *args, **kwargs):
+        self.subtotal = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+        self.cotizacion.actualizar_totales()
+    
+    def delete(self, *args, **kwargs):
+        cotizacion = self.cotizacion
+        super().delete(*args, **kwargs)
+        cotizacion.actualizar_totales()
+
+    class Meta:
+        verbose_name = _('Item de Cotización')
+        verbose_name_plural = _('Items de Cotización')

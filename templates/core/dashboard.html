@@ -96,6 +96,10 @@ body::before {
 .border-accent-custom {
     border-left: 5px solid var(--accent);
 }
+
+.border-info-custom {
+    border-left: 5px solid var(--info);
+}
 </style>
 {% endblock %}
 
@@ -197,6 +201,16 @@ body::before {
         </a>
     </div>
     {% endif %}
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <a href="{% url 'taller:cotizacion_create' %}" class="text-decoration-none">
+            <div class="quick-access-card border-info-custom">
+                <i class="fas fa-file-invoice-dollar text-info"></i>
+                <h3 class="mb-2 fw-bold text-dark">Nueva Cotización</h3>
+                <p class="text-muted mb-0">Crear presupuesto independiente</p>
+            </div>
+        </a>
+    </div>
 </div>
 
 <script>

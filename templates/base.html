@@ -678,9 +678,17 @@
 
             <li class="navbar-item-horizontal">
                 <a href="{% url 'taller:dashboard' %}"
-                    class="navbar-link-horizontal {% if active_page == 'taller' %}active{% endif %}">
+                    class="navbar-link-horizontal {% if active_page == 'taller' and active_sub != 'cotizaciones' %}active{% endif %}">
                     <i class="fas fa-tools"></i>
                     <span>Taller</span>
+                </a>
+            </li>
+
+            <li class="navbar-item-horizontal">
+                <a href="{% url 'taller:cotizacion_list' %}"
+                    class="navbar-link-horizontal {% if active_sub == 'cotizaciones' %}active{% endif %}">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Cotizaciones</span>
                 </a>
             </li>
 
@@ -873,10 +881,19 @@
 
             <li class="mobile-sidebar-item">
                 <a href="{% url 'taller:dashboard' %}"
-                    class="mobile-sidebar-link {% if active_page == 'taller' %}active{% endif %}"
+                    class="mobile-sidebar-link {% if active_page == 'taller' and active_sub != 'cotizaciones' %}active{% endif %}"
                     onclick="handleMobileSidebarClick(event)">
                     <i class="fas fa-tools"></i>
                     <span>Taller</span>
+                </a>
+            </li>
+
+            <li class="mobile-sidebar-item">
+                <a href="{% url 'taller:cotizacion_list' %}"
+                    class="mobile-sidebar-link {% if active_sub == 'cotizaciones' %}active{% endif %}"
+                    onclick="handleMobileSidebarClick(event)">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Cotizaciones</span>
                 </a>
             </li>
 
